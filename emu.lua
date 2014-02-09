@@ -181,7 +181,6 @@ local curses = require 'curses'
 local posix = require 'posix'
 
 local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
-local threads = require('threads')
 
 local prev = _G
 
@@ -189,9 +188,9 @@ return function(dir)
 	local cmd
 	local stdscr
 
-	-- Custom unique messages
-	local runCmd = {}
 	local alive = true
+	local eventQueue = {}
+	local timers = {}
 
 	function create()
 		setmetatable = prev.setmetatable
@@ -341,14 +340,11 @@ return function(dir)
 
 		os = {
 			queueEvent = function(ev, ...)
-				cmd = { 'queueEvent', { ev, ... } }
-				coroutine.yield(runCmd)
+				eventQueue[#eventQueue + 1] = { ev, ... }
 			end,
 			startTimer = function(time)
-				print('before')
-				cmd = { 'setTimer', time }
-				local ev, id = coroutine.yield(runCmd)
-				print('after')
+				local id = #timers + 1
+				timers[id] = time
 				return id
 			end,
 			clock = prev.os.clock,
@@ -511,56 +507,7 @@ return function(dir)
 	local env = {}
 	setfenv(create, env)
 
-	function run()
-		local co = coroutine.create(create)
-
-		local ev = {}
-
-		while coroutine.status(co) == 'suspended' do
-			local ok, newFilter
-
-			repeat
-				if cmd then
-					cmd = nil
-				end
-
-				ok, newFilter = coroutine.resume(co, unpack(ev))
-
-				-- io.stderr:write(type(newFilter) .. ': ' .. tostring(newFilter) .. '\n')
-
-				if cmd then
-					print('before this')
-					ev = {runCmd, coroutine.yield(unpack(cmd))}
-					print('after this: ' .. ev[2])
-				end
-
-				if shutdown then
-					io.stderr.write('stopping')
-					return
-				end
-
-				if not ok then
-					error(newFilter)
-				end
-
-				if coroutine.status(co) == 'dead' then
-					return
-				end
-			until cmd == nil
-
-			if newFilter then
-				coroutine.yield('addFilter', { 'match', newFilter })
-			end
-			
-			ev = { coroutine.yield('pullEvent') }
-
-			if newFilter then
-				coroutine.yield('rmFilter')
-			end
-		end
-	end
-
-	local thread = threads.new(run):start()
+	local co = coroutine.create(create)
 
 	curses.initscr()
 	curses.start_color()
@@ -574,15 +521,15 @@ return function(dir)
 	stdscr:clear()
 	stdscr:refresh()
 
-	while thread.alive do
+	while alive and coroutine.status(co) ~= 'dead' do
 		local clock = os.time()
 		
-		for id, time in pairs(thread.timers) do
+		for id, time in pairs(timers) do
 			-- env.print(id, clock, env.textutils.serialize(time), os.difftime(clock, time[1]))
 			if os.difftime(clock, time[1]) >= time[2] then
-				env.print(id)
-				thread:queue('timer', id)
-				thread.timers[id] = nil
+				-- env.print(id)
+				eventQueue[#eventQueue + 1] = { 'timer', id }
+				timers[id] = nil
 			end
 		end
 
@@ -591,17 +538,17 @@ return function(dir)
 		if type(char) == 'number' then
 			if char == 3 then
 				print('^c')
-				thread:stop()
+				alive = false
 				break
 			end
 
 			if char > 9 and char < 127 and char ~= 13 then
-				thread:queue('char', string.char(char))
+				eventQueue[#eventQueue + 1] = { 'char', string.char(char) }
 			end
 
 			if keys[char] then
 				local key = keys[char]
-				thread:queue('key', key)
+				eventQueue[#eventQueue + 1] = { 'key', key }
 
 				-- if (key >= keys[string.byte '1'] and key <= keys[string.byte '=']) or
 				--    (key >= keys[string.byte '\t'] and key <= keys[string.byte 'p']) or
@@ -616,13 +563,16 @@ return function(dir)
 				env.print('unknown key: ' .. tostring(char))
 			end
 		end
-		
-		thread:run()
+
+		if #eventQueue >= 1 then
+			local ok, err = coroutine.resume(co, unpack(table.remove(eventQueue, 1)))
+			if not ok then
+				print(err)
+			end
+		end
 
 		stdscr:refresh()
 	end
-
-	thread:stop()
 
 	curses.echo(true)
 	curses.nl(true)
