@@ -189,7 +189,7 @@ return function(dir)
 	local stdscr
 
 	local alive = true
-	local eventQueue = {}
+	local eventQueue = {{}}
 	local timers = {}
 
 	function create()
