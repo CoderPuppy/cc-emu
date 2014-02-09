@@ -172,7 +172,8 @@ end
 local pl = {
 	path = require 'pl.path',
 	dir = require 'pl.dir',
-	tablex = require 'pl.tablex'
+	tablex = require 'pl.tablex',
+	file = require 'pl.file'
 }
 
 require 'luarocks.index'
@@ -253,6 +254,23 @@ return function(dir)
 		fs = {
 			isReadOnly = function(path)
 				return betterifyPath(path):sub(1, 3) == 'rom'
+			end,
+
+			delete = function(path)
+				path = findPath(path)
+				pl.file.delete(path)
+			end,
+
+			move = function(src, dest)
+				src = findPath(src)
+				dest = findPath(dest)
+				pl.file.move(src, dest)
+			end,
+
+			copy = function(src, dest)
+				src = findPath(src)
+				dest = findPath(dest)
+				pl.file.copy(src, dest)
 			end,
 
 			list = function(path)
