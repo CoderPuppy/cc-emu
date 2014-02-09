@@ -193,7 +193,7 @@ function threads.new(co, ...)
 				elseif self.cmd[1] == 'setTimer' then
 					local id = #self.timers + 1
 					
-					self.timers[id] = os.clock() + self.cmd[2]
+					self.timers[id] = {os.time(), self.cmd[2]}
 					
 					args = { id }
 				elseif self.cmd[1] == 'addFilter' then
