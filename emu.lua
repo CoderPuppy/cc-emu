@@ -46,7 +46,7 @@ local _keys = {
 	string.byte '[';
 	string.byte ']';
 	13; -- enter
-	nil; -- left ctrl
+	26; -- left ctrl
 	string.byte 'a';
 	string.byte 's';
 	string.byte 'd';
@@ -537,12 +537,12 @@ return function(dir)
 
 		if type(char) == 'number' then
 			if char == 3 then
-				print('^c')
+				-- print('^c')
 				alive = false
 				break
 			end
 
-			if char > 9 and char < 127 and char ~= 13 then
+			if char > 9 and char < 127 and char ~= 13 and char ~= 26 then
 				eventQueue[#eventQueue + 1] = { 'char', string.char(char) }
 			end
 
