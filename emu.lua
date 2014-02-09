@@ -176,7 +176,6 @@ local pl = {
 }
 
 require 'luarocks.index'
-local natTerm = require 'term'
 local curses = require 'curses'
 local posix = require 'posix'
 
