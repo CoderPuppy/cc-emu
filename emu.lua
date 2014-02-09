@@ -450,8 +450,9 @@ return function(dir)
 				isColor = function() return curses.has_colors() end,
 				isColour = function() return termNat.isColor() end,
 				getSize = function()
-					local y, x = stdscr:getmaxyx()
-					return x, y
+					-- local y, x = stdscr:getmaxyx()
+					-- return x, y
+					return 52, 19
 				end,
 				getCursorPos = function() return cursorX, cursorY end,
 				setCursorPos = function(x, y)
