@@ -278,12 +278,27 @@ return function(dir)
 
 				local h = {}
 
-				function h.readAll()
-					return file:read('*a')
-				end
+				if mode == 'r' then
+					function h.readAll()
+						return file:read('*a')
+					end
 
-				function h.readLine()
-					return file:read('*l')
+					function h.readLine()
+						return file:read('*l')
+					end
+				elseif mode == 'w' or mode == 'a' then
+					function h.write(data)
+						file:write(data)
+					end
+
+					function h.writeLine(data)
+						file:write(data)
+						file:write('\n')
+					end
+
+					function h.flush()
+						file:flush()
+					end
 				end
 
 				function h.close()
