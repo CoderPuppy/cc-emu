@@ -162,10 +162,17 @@ local ignoredKeys = {
 	[40] = true; -- open paren
 	[41] = true; -- close paren
 	[63] = true; -- question mark
+	[20] = true; -- ^T
+	[27] = true; -- ^[
 }
 
 -- Ignore uppercase
 for i = 65, 90 do
+	ignoredKeys[i] = true
+end
+
+-- Ignore ctrl keys
+for i = 1, 22 do
 	ignoredKeys[i] = true
 end
 
@@ -191,12 +198,14 @@ return function(dir)
 	local alive = true
 	local eventQueue = {{}}
 	local timers = {}
+	local termNat
 
 	function create()
 		setmetatable = prev.setmetatable
 		ipairs = prev.ipairs
 		string = prev.string
 		tostring = prev.tostring
+		tonumber = prev.tonumber
 		select = prev.select
 		getfenv = prev.getfenv
 		table = prev.table
@@ -209,182 +218,188 @@ return function(dir)
 		loadstring = prev.loadstring
 		math = prev.math
 		bit = prev.bit
+		rawset = prev.rawset
 		coroutine = prev.coroutine
 		_G = getfenv()
 
-		local romPath = pl.path.normpath(pl.path.join(dirname, 'cc'))
-		local function findRomFile(path)
-			return pl.path.normpath(pl.path.join(romPath, path))
-		end
-
-		local function betterifyPath(path)
-			local oldPath
-			while oldPath ~= path do
-				oldPath = path
-
-				if path:sub(1, 1) == '/' then
-					path = path:sub(2)
-				end
-
-				if path:sub(1, 2) == './' then
-					path = path:sub(2)
-				end
+		local runRom
+		do -- FS
+			local romPath = pl.path.normpath(pl.path.join(dirname, 'cc'))
+			local function findRomFile(path)
+				return pl.path.normpath(pl.path.join(romPath, path))
 			end
 
-			return path
-		end
+			local function betterifyPath(path)
+				local oldPath
+				while oldPath ~= path do
+					oldPath = path
 
-		local function findPath(path)
-			path = betterifyPath(path)
+					if path:sub(1, 1) == '/' then
+						path = path:sub(2)
+					end
 
-			if path:sub(1, 3) == 'rom' then
-				return findRomFile(path)
+					if path:sub(1, 2) == './' then
+						path = path:sub(2)
+					end
+				end
+
+				return path
 			end
 
-			return pl.path.normpath(pl.path.join(dir, path))
-		end
+			local function findPath(path)
+				path = betterifyPath(path)
 
-		local function runRom(path, ...)
-			local fn = prev.loadfile(findRomFile(path))
-			setfenv(fn, _G)
-			return fn(...)
-		end
-
-
-		fs = {
-			isReadOnly = function(path)
-				return betterifyPath(path):sub(1, 3) == 'rom'
-			end,
-
-			delete = function(path)
-				path = findPath(path)
-				pl.file.delete(path)
-			end,
-
-			move = function(src, dest)
-				src = findPath(src)
-				dest = findPath(dest)
-				pl.file.move(src, dest)
-			end,
-
-			copy = function(src, dest)
-				src = findPath(src)
-				dest = findPath(dest)
-				pl.file.copy(src, dest)
-			end,
-
-			list = function(path)
-				path = findPath(path)
-				local files = {}
-
-				if path == dir then
-					files[#files + 1] = 'rom'
+				if path:sub(1, 3) == 'rom' then
+					return findRomFile(path)
 				end
 
-				for file in pl.path.dir(path) do
-					files[#files + 1] = file
-				end
-
-				return pl.tablex.map(pl.path.basename, files)
-			end,
-
-			open = function(path, mode)
-				local file = prev.io.open(findPath(path), mode)
-
-				if file == nil then return nil end
-
-				local h = {}
-
-				if mode == 'r' then
-					function h.readAll()
-						return file:read('*a')
-					end
-
-					function h.readLine()
-						return file:read('*l')
-					end
-				elseif mode == 'w' or mode == 'a' then
-					function h.write(data)
-						file:write(data)
-					end
-
-					function h.writeLine(data)
-						file:write(data)
-						file:write('\n')
-					end
-
-					function h.flush()
-						file:flush()
-					end
-				end
-
-				function h.close()
-					file:close()
-				end
-
-				return h
-			end,
-
-			exists = function(path)
-				return pl.path.exists(findPath(path)) ~= false
-			end,
-
-			isDir = function(path)
-				return pl.path.isdir(findPath(path))
-			end,
-
-			combine = function(a, b)
-				local function doIt()
-					if a == '' then
-						a = '/'
-					end
-
-					if a:sub(1, 1) ~= '/' and a:sub(1, 2) ~= './' then
-						a = '/' .. a
-					end
-
-					if b == '.' then
-						return a
-					end
-
-					if a == '/' and b == '..' then
-						return '..'
-					end
-
-					if a:sub(-2) == '..' and b == '..' then
-						return a .. '/..'
-					end
-
-					return pl.path.normpath(pl.path.join(a, b))
-				end
-
-				local res = doIt()
-
-				if res:sub(1, 1) == '/' then
-					res = res:sub(2)
-				end
-
-				return res
-			end,
-
-			getName = function(path) return pl.path.basename(path) end
-		}
-
-		os = {
-			queueEvent = function(ev, ...)
-				eventQueue[#eventQueue + 1] = { ev, ... }
-			end,
-			startTimer = function(time)
-				local id = #timers + 1
-				timers[id] = time
-				return id
-			end,
-			clock = prev.os.clock,
-			shutdown = function()
-				alive = false
-				coroutine.yield()
+				return pl.path.normpath(pl.path.join(dir, path))
 			end
-		}
+
+			function runRom(path, ...)
+				local fn = prev.loadfile(findRomFile(path))
+				setfenv(fn, _G)
+				return fn(...)
+			end
+
+			fs = {
+				isReadOnly = function(path)
+					return betterifyPath(path):sub(1, 3) == 'rom'
+				end,
+
+				delete = function(path)
+					path = findPath(path)
+					pl.file.delete(path)
+				end,
+
+				move = function(src, dest)
+					src = findPath(src)
+					dest = findPath(dest)
+					pl.file.move(src, dest)
+				end,
+
+				copy = function(src, dest)
+					src = findPath(src)
+					dest = findPath(dest)
+					pl.file.copy(src, dest)
+				end,
+
+				list = function(path)
+					path = findPath(path)
+					local files = {}
+
+					if path == dir then
+						files[#files + 1] = 'rom'
+					end
+
+					for file in pl.path.dir(path) do
+						files[#files + 1] = file
+					end
+
+					return pl.tablex.map(pl.path.basename, files)
+				end,
+
+				open = function(path, mode)
+					local file = prev.io.open(findPath(path), mode)
+
+					if file == nil then return nil end
+
+					local h = {}
+
+					if mode == 'r' then
+						function h.readAll()
+							return file:read('*a')
+						end
+
+						function h.readLine()
+							return file:read('*l')
+						end
+					elseif mode == 'w' or mode == 'a' then
+						function h.write(data)
+							file:write(data)
+						end
+
+						function h.writeLine(data)
+							file:write(data)
+							file:write('\n')
+						end
+
+						function h.flush()
+							file:flush()
+						end
+					end
+
+					function h.close()
+						file:close()
+					end
+
+					return h
+				end,
+
+				exists = function(path)
+					return pl.path.exists(findPath(path)) ~= false
+				end,
+
+				isDir = function(path)
+					return pl.path.isdir(findPath(path))
+				end,
+
+				combine = function(a, b)
+					local function doIt()
+						if a == '' then
+							a = '/'
+						end
+
+						if a:sub(1, 1) ~= '/' and a:sub(1, 2) ~= './' then
+							a = '/' .. a
+						end
+
+						if b == '.' then
+							return a
+						end
+
+						if a == '/' and b == '..' then
+							return '..'
+						end
+
+						if a:sub(-2) == '..' and b == '..' then
+							return a .. '/..'
+						end
+
+						return pl.path.normpath(pl.path.join(a, b))
+					end
+
+					local res = doIt()
+
+					if res:sub(1, 1) == '/' then
+						res = res:sub(2)
+					end
+
+					return res
+				end,
+
+				getName = function(path) return pl.path.basename(path) end
+			}
+		end
+
+		do -- OS
+			os = {
+				queueEvent = function(ev, ...)
+					eventQueue[#eventQueue + 1] = { ev, ... }
+				end,
+				startTimer = function(time)
+					local id = #timers + 1
+					timers[id] = { prev.os.time(), time }
+					return id
+				end,
+				clock = prev.os.clock,
+				time = prev.os.time,
+				shutdown = function()
+					alive = false
+					coroutine.yield()
+				end
+			}
+		end
 
 		do -- Term
 			local cursorX, cursorY = 1, 1
@@ -520,17 +535,21 @@ return function(dir)
 			updateColor()
 		end
 
-		rs = {
-			getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end
-		}
+		do -- RS
+			redstone = {
+				getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end;
+				setOutput = function() end;
+			}
+			rs = redstone
+		end
 
-		peripheral = {
-			getNames = function() return {} end,
-			isPresent = function() return false end,
-			getType = function() return nil end
-		}
-
-		_G.prev = prev
+		do -- Peripheral
+			peripheral = {
+				getNames = function() return {} end,
+				isPresent = function() return false end,
+				getType = function() return nil end
+			}
+		end
 
 		stdscr:clear()
 		stdscr:move(0, 0)
@@ -554,6 +573,8 @@ return function(dir)
 	stdscr:clear()
 	stdscr:refresh()
 
+	local eventFilter
+
 	while alive and coroutine.status(co) ~= 'dead' do
 		local clock = os.time()
 		
@@ -575,7 +596,11 @@ return function(dir)
 				break
 			end
 
-			if char > 9 and char < 127 and char ~= 13 and char ~= 26 then
+			if char == 20 then
+				eventQueue[#eventQueue + 1] = { 'terminate' }
+			end
+
+			if char > 9 and char < 127 and char ~= 13 and char ~= 26 and char ~= 20 and char ~= 27 then
 				eventQueue[#eventQueue + 1] = { 'char', string.char(char) }
 			end
 
@@ -597,10 +622,21 @@ return function(dir)
 			end
 		end
 
-		if #eventQueue >= 1 then
-			local ok, err = coroutine.resume(co, unpack(table.remove(eventQueue, 1)))
-			if not ok then
-				print(err)
+		while #eventQueue >= 1 do
+			local ev = table.remove(eventQueue, 1)
+			if eventFilter == nil or ev[1] == eventFilter or ev[1] == 'terminate' then
+				-- debug.sethook(co, function()
+				-- 	error('Too long without yielding', 2)
+				-- end, '', 35000)
+				local ok, err = coroutine.resume(co, unpack(ev))
+				-- debug.sethook(co)
+				if ok then
+					eventFilter = err
+				else
+					print(err)
+					sleep(1)
+				end
+				break
 			end
 		end
 
