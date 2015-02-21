@@ -183,6 +183,8 @@ local pl = {
 	file = require 'pl.file'
 }
 
+local bit = require 'bit'
+
 require 'luarocks.index'
 local curses = require 'curses'
 local posix = require 'posix'
@@ -202,6 +204,7 @@ return function(dir)
 
 	function create()
 		setmetatable = prev.setmetatable
+		getmetatable = prev.getmetatable
 		ipairs = prev.ipairs
 		string = prev.string
 		tostring = prev.tostring
@@ -535,6 +538,32 @@ return function(dir)
 			updateColor()
 		end
 
+		--[[do --term
+			local cursorPos = {0, 0}
+			local fg = 1
+			local bg = 32768
+			local blink = true
+			local termNat; termNat = {
+				isColor = function() return false end;
+				isColour = function() return false end;
+				getCursorPos = function() return unpack(cursorPos) end;
+				setCursorPos = function(x, y) cursorPos = {x, y} end;
+				getBackgroundColor = function() return bg end;
+				setBackgroundColor = function(c) bg = c end;
+				getBackgroundColour = function() return bg end;
+				setBackgroundColour = function(c) bg = c end;
+				getTextColor = function() return fg end;
+				setTextColor = function(c) fg = c end;
+				getTextColour = function() return fg end;
+				setTextColour = function(c) fg = c end;
+				getCursorBlink = function() return blink end;
+				setCursorBlink = function(b) blink = b end;
+				getSize = function() return 80, 19 end;
+				write = function(str) prev.io.write(str) end;
+			}
+			term = termNat
+		end]]
+
 		do -- RS
 			redstone = {
 				getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end;
@@ -633,8 +662,7 @@ return function(dir)
 				if ok then
 					eventFilter = err
 				else
-					print(err)
-					sleep(1)
+					error(err)
 				end
 				break
 			end
