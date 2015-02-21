@@ -46,7 +46,7 @@ local _keys = {
 	string.byte '[';
 	string.byte ']';
 	13; -- enter
-	26; -- left ctrl
+	48; -- left ctrl
 	string.byte 'a';
 	string.byte 's';
 	string.byte 'd';
@@ -76,7 +76,7 @@ local _keys = {
 	nil; -- left alt
 	string.byte ' ';
 	nil; -- caps lock
-	nil; -- f1
+	265; -- f1
 	266; -- f2
 	267; -- f3
 	268; -- f4
@@ -220,7 +220,7 @@ return function(dir)
 		error = prev.error
 		loadstring = prev.loadstring
 		math = prev.math
-		bit = prev.bit
+		bit = bit
 		rawset = prev.rawset
 		coroutine = prev.coroutine
 		_G = getfenv()
@@ -485,9 +485,9 @@ return function(dir)
 				isColor = function() return curses.has_colors() end,
 				isColour = function() return termNat.isColor() end,
 				getSize = function()
-					-- local y, x = stdscr:getmaxyx()
-					-- return x, y
-					return 52, 19
+					local y, x = stdscr:getmaxyx()
+					return x, y - 1
+					-- return 52, 19
 				end,
 				getCursorPos = function() return cursorX, cursorY end,
 				setCursorPos = function(x, y)
