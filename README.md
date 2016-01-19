@@ -7,6 +7,9 @@
 - lcurses
 - lposix
 
+### Compatibility
+This version has been tested with CC 1.77.
+
 ### Installation
 Install the dependencies (I used luaenv and luarocks to do so)
 Put ComputerCraft's lua files in `cc` (I cloned [alekso56/ComputercraftLua](https://github.com/alekso56/ComputercraftLua), you could also download the tarball or extract them (from the ComputerCraft jar) yourself).

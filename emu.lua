@@ -16,11 +16,22 @@ local _colors = {
 	[16384] = "red";
 	[32768] = "black";
 }
+local hex = {
+	['a'] = 10;
+	['b'] = 11;
+	['c'] = 12;
+	['d'] = 13;
+	['e'] = 14;
+	['f'] = 15;
+}
+for i = 0, 7 do
+	hex[tostring(i)] = i
+end
 
 local _keys = {
 	nil; -- none
 	string.byte '1';
-	string.byte '2',
+	string.byte '2';
 	string.byte '3';
 	string.byte '4';
 	string.byte '5';
@@ -46,7 +57,7 @@ local _keys = {
 	string.byte '[';
 	string.byte ']';
 	13; -- enter
-	48; -- left ctrl
+	30; -- CS` should work as left ctrl
 	string.byte 'a';
 	string.byte 's';
 	string.byte 'd';
@@ -177,17 +188,17 @@ for i = 1, 22 do
 end
 
 local pl = {
-	path = require 'pl.path',
-	dir = require 'pl.dir',
-	tablex = require 'pl.tablex',
+	path = require 'pl.path';
+	dir = require 'pl.dir';
+	tablex = require 'pl.tablex';
 	file = require 'pl.file'
 }
 
-local bit = require 'bit'
+local bit = bit32 or require 'bit'
+local unpack = _G.unpack or table.unpack
 
 require 'luarocks.index'
-local curses = require 'curses'
-local posix = require 'posix'
+local curses = require 'posix.curses'
 
 local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
 
@@ -202,7 +213,9 @@ return function(dir)
 	local timers = {}
 	local termNat
 
+	local env = {}
 	function create()
+		_ENV = env
 		setmetatable = prev.setmetatable
 		getmetatable = prev.getmetatable
 		ipairs = prev.ipairs
@@ -212,18 +225,20 @@ return function(dir)
 		select = prev.select
 		getfenv = prev.getfenv
 		table = prev.table
-		unpack = prev.unpack
+		_ENV.unpack = unpack
 		setfenv = prev.setfenv
 		pcall = prev.pcall
+		xpcall = prev.xpcall
 		type = prev.type
 		pairs = prev.pairs
 		error = prev.error
 		loadstring = prev.loadstring
+		load = prev.load
 		math = prev.math
 		bit = bit
 		rawset = prev.rawset
 		coroutine = prev.coroutine
-		_G = getfenv()
+		_G = getfenv and getfenv() or _ENV
 
 		local runRom
 		do -- FS
@@ -260,32 +275,37 @@ return function(dir)
 			end
 
 			function runRom(path, ...)
-				local fn = prev.loadfile(findRomFile(path))
-				setfenv(fn, _G)
+				local fn
+				if setfenv then
+					fn = prev.loadfile(findRomFile(path))
+					setfenv(fn, _G)
+				else
+					fn = prev.loadfile(findRomFile(path), 'bt', _G)
+				end
 				return fn(...)
 			end
 
 			fs = {
 				isReadOnly = function(path)
 					return betterifyPath(path):sub(1, 3) == 'rom'
-				end,
+				end;
 
 				delete = function(path)
 					path = findPath(path)
 					pl.file.delete(path)
-				end,
+				end;
 
 				move = function(src, dest)
 					src = findPath(src)
 					dest = findPath(dest)
 					pl.file.move(src, dest)
-				end,
+				end;
 
 				copy = function(src, dest)
 					src = findPath(src)
 					dest = findPath(dest)
 					pl.file.copy(src, dest)
-				end,
+				end;
 
 				list = function(path)
 					path = findPath(path)
@@ -300,7 +320,7 @@ return function(dir)
 					end
 
 					return pl.tablex.map(pl.path.basename, files)
-				end,
+				end;
 
 				open = function(path, mode)
 					local file = prev.io.open(findPath(path), mode)
@@ -337,15 +357,15 @@ return function(dir)
 					end
 
 					return h
-				end,
+				end;
 
 				exists = function(path)
 					return pl.path.exists(findPath(path)) ~= false
-				end,
+				end;
 
 				isDir = function(path)
 					return pl.path.isdir(findPath(path))
-				end,
+				end;
 
 				combine = function(a, b)
 					local function doIt()
@@ -379,7 +399,7 @@ return function(dir)
 					end
 
 					return res
-				end,
+				end;
 
 				getName = function(path) return pl.path.basename(path) end
 			}
@@ -389,14 +409,14 @@ return function(dir)
 			os = {
 				queueEvent = function(ev, ...)
 					eventQueue[#eventQueue + 1] = { ev, ... }
-				end,
+				end;
 				startTimer = function(time)
 					local id = #timers + 1
 					timers[id] = { prev.os.time(), time }
 					return id
-				end,
-				clock = prev.os.clock,
-				time = prev.os.time,
+				end;
+				clock = prev.os.clock;
+				time = prev.os.time;
 				shutdown = function()
 					alive = false
 					coroutine.yield()
@@ -453,6 +473,10 @@ return function(dir)
 				return c
 			end
 
+			local function fromHexColor(h)
+				return hex[h] or error('not a hex color: ' .. tostring(h))
+			end
+
 			local curAttr = 0
 			local function updateColor()
 				stdscr:attroff(curAttr)
@@ -462,7 +486,10 @@ return function(dir)
 				local name = _colors[math.pow(2, textColor)]
 
 				if name == 'orange' or name == 'lightBlue' or name == 'lime' or name == 'yellow' then
-					curAttr = bit.bor(curAttr, curses.A_BOLD)
+					-- curAttr = bit.bor(curAttr, curses.A_BOLD)
+					stdscr:attron(curses.A_BOLD)
+				else
+					stdscr:attroff(curses.A_BOLD)
 				end
 
 				stdscr:attron(curAttr)
@@ -476,46 +503,67 @@ return function(dir)
 
 			local termNat
 			termNat = {
-				clear = function() stdscr:clear() end,
+				clear = function() stdscr:clear() end;
 				clearLine = function()
 					stdscr:move(cursorY - 1, 0)
 					stdscr:clrtoeol()
 					stdscr:move(cursorY - 1, cursorX - 1)
-				end,
-				isColor = function() return curses.has_colors() end,
-				isColour = function() return termNat.isColor() end,
+				end;
+				isColor = function() return curses.has_colors() end;
+				isColour = function() return termNat.isColor() end;
 				getSize = function()
 					local y, x = stdscr:getmaxyx()
 					return x, y - 1
 					-- return 52, 19
-				end,
-				getCursorPos = function() return cursorX, cursorY end,
+				end;
+				getCursorPos = function() return cursorX, cursorY end;
 				setCursorPos = function(x, y)
+					if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
 					cursorX, cursorY = x, y
 
 					stdscr:move(y - 1, x - 1)
 					stdscr:refresh()
-				end,
-				setTextColour = function(...) return termNat.setTextColor(...) end,
+				end;
+				setTextColour = function(...) return termNat.setTextColor(...) end;
 				setTextColor = function(c)
 					textColor = math.log(c) / log2
 
 					updateColor()
-				end,
-				setBackgroundColour = function(...) return termNat.setBackgroundColor(...) end,
+				end;
+				getTextColour = function(...) return termNat.getTextColor(...) end;
+				getTextColor = function()
+					return ccColorFor(textColor)
+				end;
+				setBackgroundColour = function(...) return termNat.setBackgroundColor(...) end;
 				setBackgroundColor = function(c)
 					backColor = math.log(c) / log2
 
 					updateColor()
-				end,
+				end;
+				getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
+				getBackgroundColor = function()
+					return ccColorFor(backColor)
+				end;
 				write = function(text)
-					text = text:gsub('\n', '?')
+					text = text:gsub('[\n\r]', '?')
 
 					stdscr:addstr(text)
 
 					termNat.setCursorPos(cursorX + #text, cursorY)
-				end,
-				setCursorBlink = function() end,
+				end;
+				blit = function(text, textColors, backColors)
+					text = text:gsub('[\n\r]', '?')
+
+					if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
+
+					for i = 1, #text do
+						textColor = fromHexColor(textColors:sub(i, i))
+						backColor = fromHexColor(backColors:sub(i, i))
+						updateColor()
+						stdscr:mvaddstr(cursorY - 1, cursorX + i - 2, text:sub(i, i))
+					end
+				end;
+				setCursorBlink = function() end;
 				scroll = function(n)
 					stdscr:scrl(n)
 
@@ -536,7 +584,7 @@ return function(dir)
 			term = termNat
 
 			updateColor()
-		end
+		end--]]
 
 		--[[do --term
 			local cursorPos = {0, 0}
@@ -562,7 +610,7 @@ return function(dir)
 				write = function(str) prev.io.write(str) end;
 			}
 			term = termNat
-		end]]
+		end--]]
 
 		do -- RS
 			redstone = {
@@ -574,9 +622,9 @@ return function(dir)
 
 		do -- Peripheral
 			peripheral = {
-				getNames = function() return {} end,
-				isPresent = function() return false end,
-				getType = function() return nil end
+				getNames = function() return {} end;
+				isPresent = function() return false end;
+				getType = function() return nil end;
 			}
 		end
 
@@ -585,8 +633,7 @@ return function(dir)
 
 		runRom('bios.lua')
 	end
-	local env = {}
-	setfenv(create, env)
+	if setfenv then setfenv(create, env) end
 
 	local co = coroutine.create(create)
 
@@ -629,7 +676,7 @@ return function(dir)
 				eventQueue[#eventQueue + 1] = { 'terminate' }
 			end
 
-			if char > 9 and char < 127 and char ~= 13 and char ~= 26 and char ~= 20 and char ~= 27 then
+			if char > 9 and char < 127 and char ~= 13 and char ~= 26 and char ~= 20 and char ~= 27 and char ~= 30 then
 				eventQueue[#eventQueue + 1] = { 'char', string.char(char) }
 			end
 
@@ -670,6 +717,8 @@ return function(dir)
 
 		stdscr:refresh()
 	end
+
+	while stdscr:getch() ~= 3 do end
 
 	curses.echo(true)
 	curses.nl(true)
