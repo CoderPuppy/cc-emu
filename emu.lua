@@ -214,10 +214,6 @@ return function(dir, ...)
 	local termNat
 
 	local env = {}
-	env.colors = {}
-	for c, name in pairs(_colors) do
-		env.colors[name] = c
-	end
 	function create(...)
 		_ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
@@ -306,7 +302,9 @@ return function(dir, ...)
 						files[#files + 1] = file
 					end
 
-					return pl.tablex.map(pl.path.basename, files)
+					files = pl.tablex.map(pl.path.basename, files)
+					table.sort(files)
+					return files
 				end;
 
 				open = function(path, mode)
