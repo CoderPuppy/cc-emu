@@ -194,7 +194,7 @@ local pl = {
 	file = require 'pl.file'
 }
 
-local bit = bit32 or require 'bit'
+local _bit = bit32 or require 'bit'
 local unpack = _G.unpack or table.unpack
 
 require 'luarocks.index'
@@ -216,29 +216,14 @@ return function(dir)
 	local env = {}
 	function create()
 		_ENV = env
-		setmetatable = prev.setmetatable
-		getmetatable = prev.getmetatable
-		ipairs = prev.ipairs
-		string = prev.string
-		tostring = prev.tostring
-		tonumber = prev.tonumber
-		select = prev.select
-		getfenv = prev.getfenv
-		table = prev.table
+		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION'}) do
+			env[name] = prev[name]
+		end
 		_ENV.unpack = unpack
-		setfenv = prev.setfenv
-		pcall = prev.pcall
-		xpcall = prev.xpcall
-		type = prev.type
-		pairs = prev.pairs
-		error = prev.error
-		loadstring = prev.loadstring
-		load = prev.load
-		math = prev.math
-		bit = bit
-		rawset = prev.rawset
-		coroutine = prev.coroutine
+		bit = _bit
 		_G = getfenv and getfenv() or _ENV
+
+		_G.prev = prev
 
 		local runRom
 		do -- FS
@@ -509,8 +494,8 @@ return function(dir)
 					stdscr:clrtoeol()
 					stdscr:move(cursorY - 1, cursorX - 1)
 				end;
-				isColor = function() return curses.has_colors() end;
 				isColour = function() return termNat.isColor() end;
+				isColor = function() return curses.has_colors() end;
 				getSize = function()
 					local y, x = stdscr:getmaxyx()
 					return x, y - 1
@@ -608,6 +593,7 @@ return function(dir)
 				setCursorBlink = function(b) blink = b end;
 				getSize = function() return 80, 19 end;
 				write = function(str) prev.io.write(str) end;
+				scroll = function() end;
 			}
 			term = termNat
 		end--]]
@@ -718,7 +704,7 @@ return function(dir)
 		stdscr:refresh()
 	end
 
-	while stdscr:getch() ~= 3 do end
+	-- while stdscr:getch() ~= 3 do end
 
 	curses.echo(true)
 	curses.nl(true)

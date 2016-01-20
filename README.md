@@ -8,7 +8,12 @@
 - lposix
 
 ### Compatibility
-This version has been tested with CC 1.77.
+This version has been cursorily tested with:
+- 1.77
+- 1.64
+- 1.6
+- 1.5
+- 1.41
 
 ### Installation
 Install the dependencies (I used luaenv and luarocks to do so)
