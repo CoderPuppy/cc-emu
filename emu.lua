@@ -302,7 +302,9 @@ return function(dir, ...)
 						files[#files + 1] = file
 					end
 
-					return pl.tablex.map(pl.path.basename, files)
+					files = pl.tablex.map(pl.path.basename, files)
+					table.sort(files)
+					return files
 				end;
 
 				open = function(path, mode)
@@ -619,7 +621,20 @@ return function(dir, ...)
 		stdscr:clear()
 		stdscr:move(0, 0)
 
-		runRom('bios.lua', ...)
+		xpcall(runRom, function(err)
+			term.setTextColor(math.pow(2, 0))
+			term.setBackgroundColor(math.pow(2, 14))
+			term.clear()
+			print(err)
+			local level = 5
+			while true do
+				local _, msg = pcall(error, '@', level)
+				if msg == '@' then break end
+				print(msg)
+				level = level + 1
+			end
+			while stdscr:getch() ~= 3 do end
+		end, 'bios.lua', ...)
 	end
 	if setfenv then setfenv(create, env) end
 
