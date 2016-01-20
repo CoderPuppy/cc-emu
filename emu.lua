@@ -693,6 +693,13 @@ return function(dir, ...)
 				if ok then
 					eventFilter = err
 				else
+					stdscr:clear()
+					-- red on black
+					env.term.setTextColor(math.pow(2, 14))
+					env.term.setBackgroundColor(math.pow(2, 0))
+					stdscr:mvaddstr(0, 0, err)
+					stdscr:mvaddstr(1, 0, "Press Control-c to exit")
+					while stdscr:getch() ~= 3 do end
 					error(err)
 				end
 				break
