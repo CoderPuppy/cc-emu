@@ -4,7 +4,7 @@ io.stdout:setvbuf('no')
 
 local path = require 'pl.path'
 
-package.path = package.path .. path.normpath(path.join(arg[0], '../?.lua'))
+package.path = package.path .. ';' .. path.normpath(path.join(arg[0], '../?.lua'))
 
 local emu = require 'emu'
 

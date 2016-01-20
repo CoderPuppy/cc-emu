@@ -2,14 +2,15 @@
 **A ComputerCraft Emulator for the Terminal**
 
 ### Requirements
-- luajit with lua 5.2 compatibility (might work with Lua 5.1)
-- Penlight
-- lcurses
-- lposix
+- [LuaJIT](http://luajit.org/) with Lua 5.2 compatibility or [Lua 5.2 or 5.3](http://www.lua.org/) (only works for CC 1.74 and above)
+- [Penlight](http://stevedonovan.github.io/Penlight/api/index.html)
+- [luaposix](http://luaposix.github.io/luaposix/)
 
 ### Compatibility
 This version has been cursorily tested with:
 - 1.77
+- 1.74
+- 1.73
 - 1.64
 - 1.6
 - 1.5
