@@ -214,6 +214,10 @@ return function(dir, ...)
 	local termNat
 
 	local env = {}
+	env.colors = {}
+	for c, name in ipairs(_colors) do
+		env.colors[name] = c
+	end
 	function create(...)
 		_ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
@@ -615,7 +619,20 @@ return function(dir, ...)
 		stdscr:clear()
 		stdscr:move(0, 0)
 
-		runRom('bios.lua', ...)
+		xpcall(runRom, function(err)
+			term.setTextColor(math.pow(2, 0))
+			term.setBackgroundColor(math.pow(2, 14))
+			term.clear()
+			print(err)
+			local level = 5
+			while true do
+				local _, msg = pcall(error, '@', level)
+				if msg == '@' then break end
+				print(msg)
+				level = level + 1
+			end
+			while stdscr:getch() ~= 3 do end
+		end, 'bios.lua', ...)
 	end
 	if setfenv then setfenv(create, env) end
 
