@@ -36,3 +36,4 @@ Your directory structure should now look something like below
 
 ### Usage
 `lua cli.lua <directory>`- Start a computer in *directory*
+If you want to use left control you can instead press `Ctrl-Shift-tilde` (this might be broken on other terminal emulators, tested on st and xterm).

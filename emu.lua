@@ -216,14 +216,12 @@ return function(dir)
 	local env = {}
 	function create()
 		_ENV = env
-		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION'}) do
+		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
 			env[name] = prev[name]
 		end
 		_ENV.unpack = unpack
 		bit = _bit
 		_G = getfenv and getfenv() or _ENV
-
-		_G.prev = prev
 
 		local runRom
 		do -- FS
