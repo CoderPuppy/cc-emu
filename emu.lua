@@ -215,7 +215,7 @@ return function(dir, ...)
 
 	local env = {}
 	env.colors = {}
-	for c, name in ipairs(_colors) do
+	for c, name in pairs(_colors) do
 		env.colors[name] = c
 	end
 	function create(...)
