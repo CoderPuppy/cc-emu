@@ -204,17 +204,17 @@ local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
 
 local prev = _G
 
-return function(dir)
+return function(dir, ...)
 	local cmd
 	local stdscr
 
 	local alive = true
-	local eventQueue = {{}}
+	local eventQueue = {{n = select('#', ...), ...}}
 	local timers = {}
 	local termNat
 
 	local env = {}
-	function create()
+	function create(...)
 		_ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
 			env[name] = prev[name]
@@ -391,7 +391,7 @@ return function(dir)
 		do -- OS
 			os = {
 				queueEvent = function(ev, ...)
-					eventQueue[#eventQueue + 1] = { ev, ... }
+					eventQueue[#eventQueue + 1] = { n = select('#', ...) + 1, ev, ... }
 				end;
 				startTimer = function(time)
 					local id = #timers + 1
@@ -496,7 +496,7 @@ return function(dir)
 				isColor = function() return curses.has_colors() end;
 				getSize = function()
 					local y, x = stdscr:getmaxyx()
-					return x, y - 1
+					return x, y
 					-- return 52, 19
 				end;
 				getCursorPos = function() return cursorX, cursorY end;
@@ -615,7 +615,7 @@ return function(dir)
 		stdscr:clear()
 		stdscr:move(0, 0)
 
-		runRom('bios.lua')
+		runRom('bios.lua', ...)
 	end
 	if setfenv then setfenv(create, env) end
 
@@ -629,7 +629,7 @@ return function(dir)
 	curses.raw(true)
 	stdscr:keypad(true)
 	stdscr:timeout(100)
-	stdscr:scrollok(true)
+	stdscr:scrollok(false)
 	stdscr:clear()
 	stdscr:refresh()
 
@@ -688,7 +688,7 @@ return function(dir)
 				-- debug.sethook(co, function()
 				-- 	error('Too long without yielding', 2)
 				-- end, '', 35000)
-				local ok, err = coroutine.resume(co, unpack(ev))
+				local ok, err = coroutine.resume(co, unpack(ev, 1, ev.n))
 				-- debug.sethook(co)
 				if ok then
 					eventFilter = err

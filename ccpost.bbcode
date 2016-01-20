@@ -1,0 +1,57 @@
+[center]
+[size=6][b]Termu[/b][/size]
+[b]A ComputerCraft Emulator for the Terminal[/b]
+
+This is a simple emulator written in Lua using Curses.
+It definitely doesn't have perfect emulation (e.g. LuaJ string bug, error checking).
+But it's pretty lightweight, supports very old versions of CC and with a couple small tweaks to the ROM can be automated (just in case you want to do that).
+It's only been tested on Linux, but it should work on OS X and you might be able to get it to work on Windows (using MinGW or Cygwin or something).
+
+[b]Github[/b]: [url=https://github.com/CoderPuppy/cc-emu]CoderPuppy/cc-emu[/url]
+[b]License[/b]: MIT
+
+[size=5][b]Recomended Installation[/b][/size]
+[spoiler]
+First install [url=http://lua.org]Lua[/url]:
+Arch Linux:
+[code]
+pacman -S lua
+[/code]
+Ubuntu (and most other Debian-based distros):
+[code]
+apt-get install lua5.2
+[/code]
+
+Install [url=https://luarocks.org]LuaRocks[/url]:
+[url=https://github.com/keplerproject/luarocks/wiki/Download]Instructions[/url]
+
+Either clone the repository or download and unpack the [url=https://github.com/CoderPuppy/cc-emu/archive/master.zip]zip[/url]
+
+Either clone [url=https://github.com/alekso56/ComputercraftLua]alekso56/ComputercraftLua[/url] or download and unpack the [url=https://github.com/alekso56/ComputercraftLua/archive/master.zip]zip[/url] so that you have a directory structure that looks like:
+[code]
+.
+├── cc
+│   ├── bios.lua
+│   ├── README.md
+│   ├── rom
+│   └── treasure
+├── ccpost.bbcode
+├── cli.lua
+├── emu.lua
+├── keyboard-test.lua
+├── LICENSE.txt
+└── README.md
+[/code]
+
+In a terminal run:
+[code]
+luarocks install penlight
+luarocks install luaposix
+[/code]
+
+To start the emulator, run in a terminal in the directory the contains [i]cli.lua[/i]:
+[code]
+lua cli.lua . # replace with where you want the computer's root directory to be
+[/code]
+[/spoiler]
+[/center]

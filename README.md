@@ -1,6 +1,7 @@
 # CC Termu
 **A ComputerCraft Emulator for the Terminal**
 
+
 ### Requirements
 - [LuaJIT](http://luajit.org/) with Lua 5.2 compatibility or [Lua 5.2 or 5.3](http://www.lua.org/) (only works for CC 1.74 and above)
 - [Penlight](http://stevedonovan.github.io/Penlight/api/index.html)
@@ -8,6 +9,7 @@
 
 ### Compatibility
 This version has been cursorily tested with:
+
 - 1.77
 - 1.74
 - 1.73
@@ -30,10 +32,9 @@ Your directory structure should now look something like below
 ├── cli.lua
 ├── emu.lua
 ├── LICENSE.txt
-├── README.md
-└── test
+└── README.md
 ```
 
 ### Usage
-`lua cli.lua <directory>`- Start a computer in *directory*
+`lua cli.lua <directory> <args>`- Start a computer in *directory* (*args* is passed to `bios.lua`)
 If you want to use left control you can instead press `Ctrl-Shift-tilde` (this might be broken on other terminal emulators, tested on st and xterm).
