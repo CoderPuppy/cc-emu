@@ -291,7 +291,7 @@ return function(dir, ...)
 				end;
 
 				list = function(path)
-					path = findPath(path)
+					path = pl.path.normpath(pl.path.join(findPath(path), '.'))
 					local files = {}
 
 					if path == dir then
@@ -475,6 +475,8 @@ return function(dir, ...)
 					stdscr:attroff(curses.A_BOLD)
 				end
 
+				stdscr:wbkgdset(bit.bor(string.byte(' '), curses.color_pair(colorId(textColor, backColor))))
+
 				stdscr:attron(curAttr)
 			end
 
@@ -486,7 +488,9 @@ return function(dir, ...)
 
 			local termNat
 			termNat = {
-				clear = function() stdscr:clear() end;
+				clear = function()
+					stdscr:clear()
+				end;
 				clearLine = function()
 					stdscr:move(cursorY - 1, 0)
 					stdscr:clrtoeol()
