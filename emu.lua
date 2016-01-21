@@ -16,6 +16,24 @@ local _colors = {
 	[16384] = "red";
 	[32768] = "black";
 }
+local ansiColor = {
+	    white = {7, false}; -- white
+	   orange = {1,  true}; -- bright red
+	  magenta = {5, false}; -- magenta
+	lightBlue = {4,  true}; -- bright blue
+	   yellow = {3,  true}; -- bright yellow
+	     lime = {2,  true}; -- bright green
+	     pink = {5, false}; -- magenta
+	     gray = {0, false}; -- black
+	lightGray = {0, false}; -- black
+	     cyan = {6, false}; -- cyan
+	   purple = {5, false}; -- magenta
+	     blue = {4, false}; -- blue
+	    brown = {3, false}; -- yellow
+	    green = {2, false}; -- green
+	      red = {1, false}; -- red
+	    black = {0, false}; -- black
+}
 local hex = {
 	['a'] = 10;
 	['b'] = 11;
@@ -30,73 +48,73 @@ end
 
 local _keys = {
 	nil; -- none
-	string.byte '1';
-	string.byte '2';
-	string.byte '3';
-	string.byte '4';
-	string.byte '5';
-	string.byte '6';
-	string.byte '7';
-	string.byte '8';
-	string.byte '9';
-	string.byte '0';
-	string.byte '-';
-	string.byte '=';
-	263; -- backspace
-	string.byte '\t';
-	string.byte 'q';
-	string.byte 'w';
-	string.byte 'e';
-	string.byte 'r';
-	string.byte 't';
-	string.byte 'y';
-	string.byte 'u';
-	string.byte 'i';
-	string.byte 'o';
-	string.byte 'p';
-	string.byte '[';
-	string.byte ']';
-	13; -- enter
-	30; -- CS` should work as left ctrl
-	string.byte 'a';
-	string.byte 's';
-	string.byte 'd';
-	string.byte 'f';
-	string.byte 'g';
-	string.byte 'h';
-	string.byte 'j';
-	string.byte 'k';
-	string.byte 'l';
-	string.byte ';';
-	string.byte '\'';
-	string.byte '`';
+	{'1', '!'};
+	{'2', '@'};
+	{'3', '#'};
+	{'4', '$'};
+	{'5', '%'};
+	{'6', '^'};
+	{'7', '&'};
+	{'8', '*'};
+	{'9', '('};
+	{'0', ')'};
+	{'-', '_'};
+	{'=', '+'};
+	'\8'; -- backspace
+	{'\9', '\27[Z'};
+	{'q', 'Q'};
+	{'w', 'W'};
+	{'e', 'E'};
+	{'r', 'R'};
+	{'t', 'T'};
+	{'y', 'Y'};
+	{'u', 'U'};
+	{'i', 'I'};
+	{'o', 'O'};
+	{'p', 'P'};
+	{'[', '{'};
+	{']', '}'};
+	'\13'; -- enter
+	'\30'; -- CS` should work as left ctrl
+	{'a', 'A'};
+	{'s', 'S'};
+	{'d', 'D'};
+	{'f', 'F'};
+	{'g', 'G'};
+	{'h', 'H'};
+	{'j', 'J'};
+	{'k', 'K'};
+	{'l', 'L'};
+	{';', ':'};
+	{'\'', '"'};
+	{'`', '~'};
 	nil; -- left shift
-	string.byte '\\';
-	string.byte 'z';
-	string.byte 'x';
-	string.byte 'c';
-	string.byte 'v';
-	string.byte 'b';
-	string.byte 'n';
-	string.byte 'm';
-	string.byte ',';
-	string.byte '.';
-	string.byte '/';
+	{'\\', '|'};
+	{'z', 'Z'};
+	{'x', 'X'};
+	{'c', 'C'};
+	{'v', 'V'};
+	{'b', 'B'};
+	{'n', 'N'};
+	{'m', 'M'};
+	{',', '<'};
+	{'.', '>'};
+	{'/', '?'};
 	nil; -- right shift
-	string.byte '*';
+	nil; -- multiply?
 	nil; -- left alt
-	string.byte ' ';
+	' ';
 	nil; -- caps lock
-	265; -- f1
-	266; -- f2
-	267; -- f3
-	268; -- f4
-	269; -- f5
-	270; -- f6
-	271; -- f7
-	272; -- f8
-	273; -- f9
-	274; -- f10
+	'\27OP'; -- f1
+	'\27OQ'; -- f2
+	'\27OR'; -- f3
+	'\27OS'; -- f4
+	'\27[15~'; -- f5
+	'\27[17~'; -- f6
+	'\27[18~'; -- f7
+	'\27[19~'; -- f8
+	'\27[20~'; -- f9
+	'\27[21~'; -- f10
 	nil; -- numlock
 	nil; -- scrolllock
 	nil; -- num pad 7
@@ -113,60 +131,144 @@ local _keys = {
 	nil; -- num pad 0
 	nil; -- num pad dec
 	nil; nil; nil;
-	410; -- f11
-	276; -- f12
-	nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil;
+	'\27[23~'; -- f11 -- TODO: this could be wrong
+	'\27[24~'; -- f12
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- f13
 	nil; -- f14
 	nil; -- f15
-	nil; nil; nil; nil; nil; nil; nil; nil; nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- kana
-	nil; nil; nil; nil; nil; nil; nil; nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- convert
 	nil;
 	nil; -- no convert
 	nil;
 	nil; -- yen
-	nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- num pad equals
-	nil; nil;
-	string.byte '^';
-	string.byte '@';
-	string.byte ':';
-	string.byte '_';
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- kanji
 	nil; -- stop
 	nil; -- ax
 	nil;
 	nil; -- num pad enter
 	nil; -- right ctrl
-	nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- num pad comma
 	nil;
 	nil; -- num pad divide
-	nil; nil;
+	nil;
+	nil;
 	nil; -- right alt
-	nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil; nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
+	nil;
 	nil; -- pause
 	nil;
-	262; -- home
-	259; -- up
-	339; -- page up
+	'\27[1~'; -- home
+	'\27OA'; -- up
+	'\27[5~'; -- page up
 	nil;
-	260; -- left
+	'\27OD'; -- left
 	nil;
-	261; -- right
+	'\27OC'; -- right
 	nil;
-	360; -- end
-	258; -- down
-	338; -- page down
-	331; -- insert
-	330; -- delete
+	'\27[4~'; -- end
+	'\27OB'; -- down
+	'\27[6~'; -- page down
+	'\27[2~'; -- insert
 }
 
 local keys = {}
 for cc, real in pairs(_keys) do
-	keys[real] = cc
+	keys[cc] = real
+	if type(real) == 'table' then
+		for _, seq in ipairs(real) do
+			keys[seq] = cc
+		end
+	else
+		keys[real] = cc
+	end
 end
 
 local ignoredKeys = {
@@ -191,14 +293,28 @@ local pl = {
 	path = require 'pl.path';
 	dir = require 'pl.dir';
 	tablex = require 'pl.tablex';
-	file = require 'pl.file'
+	file = require 'pl.file';
+	pretty = require 'pl.pretty';
 }
 
 local _bit = bit32 or require 'bit'
 local unpack = _G.unpack or table.unpack
 
 require 'luarocks.index'
-local curses = require 'posix.curses'
+local terminfo = require 'terminfo'
+local T = setmetatable({}, {
+	__index = function(t, k)
+		local v = terminfo.get(k)
+		if type(v) == 'string' then
+			return function(...)
+				return terminfo.tparm(v, ...)
+			end
+		else
+			return v
+		end
+	end;
+})
+local luv = require 'luv'
 
 local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
 
@@ -213,15 +329,18 @@ return function(dir, ...)
 	local timers = {}
 	local termNat
 
+	local stdin = luv.new_tty(0, true)
+
 	local env = {}
 	function create(...)
-		_ENV = env
+		local _ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
 			env[name] = prev[name]
 		end
-		_ENV.unpack = unpack
+		env.unpack = unpack
+		env.prev = prev -- VERY BAD
 		bit = _bit
-		_G = getfenv and getfenv() or _ENV
+		_G = env
 
 		local runRom
 		do -- FS
@@ -397,8 +516,22 @@ return function(dir, ...)
 				end;
 				startTimer = function(time)
 					local id = #timers + 1
-					timers[id] = { prev.os.time(), time }
+					local timer = luv.new_timer()
+					luv.timer_start(timer, time, 0, function()
+						timers[id] = nil
+						luv.timer_stop(timer)
+						luv.close(timer)
+						eventQueue[#eventQueue + 1] = { 'timer', id }
+					end)
+					timers[id] = { after = prev.os.time(), offset = time, timer = timer }
 					return id
+				end;
+				cancelTimer = function(id)
+					local timer = timers[id]
+					if timer then
+						luv.timer_stop(timer.timer)
+						luv.close(timer.timer)
+					end
 				end;
 				clock = prev.os.clock;
 				time = prev.os.time;
@@ -414,10 +547,6 @@ return function(dir, ...)
 			local textColor, backColor = 0, 15
 			local log2 = math.log(2)
 
-			local function colorId(fg, bg)
-				return bit.lshift(bit.band(fg, 15), 4) + bit.band(bg, 15)
-			end
-
 			local function ccColorFor(c)
 				if type(c) ~= 'number' or c < 0 or c > 15 then
 					error('that\'s not a valid color: ' .. tostring(c))
@@ -426,82 +555,24 @@ return function(dir, ...)
 				return math.pow(2, c)
 			end
 
-			local function cursesColorFor(c)
-				if type(c) ~= 'number' or c < 0 or c > 15 then
-					error('that\'s not a valid color: ' .. tostring(c))
-				end
-
-				c = ccColorFor(c)
-
-				if type(_colors[c]) ~= 'string' then
-					error('no name for that color: ' .. tostring(c))
-				end
-
-				c = _colors[c]
-
-				if c == 'orange' then
-					c = curses.COLOR_RED
-				elseif c == 'lightBlue' then
-					c = curses.COLOR_BLUE
-				elseif c == 'lime' then
-					c = curses.COLOR_GREEN
-				elseif c == 'pink' or c == 'purple' then
-					c = curses.COLOR_MAGENTA
-				elseif c == 'gray' or c == 'lightGray' then
-					c = curses.COLOR_BLACK
-				elseif c == 'brown' then
-					c = curses.COLOR_YELLOW
-				else
-					c = curses['COLOR_' .. c:upper()]
-				end
-
-				return c
-			end
-
 			local function fromHexColor(h)
 				return hex[h] or error('not a hex color: ' .. tostring(h))
-			end
-
-			local curAttr = 0
-			local function updateColor()
-				stdscr:attroff(curAttr)
-
-				curAttr = curses.color_pair(colorId(textColor, backColor))
-
-				local name = _colors[math.pow(2, textColor)]
-
-				if name == 'orange' or name == 'lightBlue' or name == 'lime' or name == 'yellow' then
-					-- curAttr = bit.bor(curAttr, curses.A_BOLD)
-					stdscr:attron(curses.A_BOLD)
-				else
-					stdscr:attroff(curses.A_BOLD)
-				end
-
-				stdscr:wbkgdset(bit.bor(string.byte(' '), curses.color_pair(colorId(textColor, backColor))))
-
-				stdscr:attron(curAttr)
-			end
-
-			for fg = 0, 15 do
-				for bg = 0, 15 do
-					curses.init_pair(colorId(fg, bg), cursesColorFor(fg), cursesColorFor(bg))
-				end
 			end
 
 			local termNat
 			termNat = {
 				clear = function()
-					stdscr:clear()
+					prev.io.write(T.clear())
 				end;
 				clearLine = function()
-					stdscr:move(cursorY - 1, 0)
-					stdscr:clrtoeol()
-					stdscr:move(cursorY - 1, cursorX - 1)
+					termNat.setCursorPos(cursorY, 1)
+					prev.io.write(T.el)
+					termNat.setCursorPos(cursorY, cursorX)
 				end;
-				isColour = function() return termNat.isColor() end;
-				isColor = function() return curses.has_colors() end;
+				isColour = function() return true end;
+				isColor = function() return true end;
 				getSize = function()
-					local y, x = stdscr:getmaxyx()
+					local y, x = luv.tty_get_winsize(stdin)
 					return x, y
 					-- return 52, 19
 				end;
@@ -510,14 +581,15 @@ return function(dir, ...)
 					if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
 					cursorX, cursorY = x, y
 
-					stdscr:move(y - 1, x - 1)
-					stdscr:refresh()
+					prev.io.write(T.cup(cursorY - 1, cursorX - 1))
 				end;
 				setTextColour = function(...) return termNat.setTextColor(...) end;
 				setTextColor = function(c)
 					textColor = math.log(c) / log2
 
-					updateColor()
+					local color = ansiColor[_colors[c] ]
+					prev.io.write(T.setaf(color[1]))
+					prev.io.write(T[color[2] and 'bold' or 'sgr0']())
 				end;
 				getTextColour = function(...) return termNat.getTextColor(...) end;
 				getTextColor = function()
@@ -527,7 +599,7 @@ return function(dir, ...)
 				setBackgroundColor = function(c)
 					backColor = math.log(c) / log2
 
-					updateColor()
+					prev.io.write(T.setab(ansiColor[_colors[c] ][1]))
 				end;
 				getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
 				getBackgroundColor = function()
@@ -535,9 +607,7 @@ return function(dir, ...)
 				end;
 				write = function(text)
 					text = text:gsub('[\n\r]', '?')
-
-					stdscr:addstr(text)
-
+					prev.io.write(text)
 					termNat.setCursorPos(cursorX + #text, cursorY)
 				end;
 				blit = function(text, textColors, backColors)
@@ -546,33 +616,32 @@ return function(dir, ...)
 					if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
 
 					for i = 1, #text do
-						textColor = fromHexColor(textColors:sub(i, i))
-						backColor = fromHexColor(backColors:sub(i, i))
-						updateColor()
-						stdscr:mvaddstr(cursorY - 1, cursorX + i - 2, text:sub(i, i))
+						termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
+						termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
+						prev.io.write(text:sub(i, i))
 					end
+					cursorX = cursorX + #text
 				end;
 				setCursorBlink = function() end;
 				scroll = function(n)
-					stdscr:scrl(n)
+					prev.io.write(T.cup(0, 0))
+					prev.io.write(T[n < 0 and 'rin' or 'indn'](math.abs(n)))
 
-					if n > 0 then
-						stdscr:move(19 - n, 0)
-						stdscr:clrtobot()
-					elseif n < 0 then
-						for i = 0, n do
-							stdscr:move(i, 0)
-							stdscr:clrtoeol()
-						end
-					end
+					-- if n > 0 then
+					-- 	stdscr:move(19 - n, 0)
+					-- 	stdscr:clrtobot()
+					-- elseif n < 0 then
+					-- 	for i = 0, n do
+					-- 		stdscr:move(i, 0)
+					-- 		stdscr:clrtoeol()
+					-- 	end
+					-- end
 
 					termNat.setCursorPos(cursorX, cursorY)
 				end
 			}
 
 			term = termNat
-
-			updateColor()
 		end--]]
 
 		--[[do --term
@@ -618,9 +687,6 @@ return function(dir, ...)
 			}
 		end
 
-		stdscr:clear()
-		stdscr:move(0, 0)
-
 		xpcall(runRom, function(err)
 			term.setTextColor(math.pow(2, 0))
 			term.setBackgroundColor(math.pow(2, 14))
@@ -640,66 +706,82 @@ return function(dir, ...)
 
 	local co = coroutine.create(create)
 
-	curses.initscr()
-	curses.start_color()
-	stdscr = curses.stdscr()
-	curses.echo(false)
-	curses.nl(false)
-	curses.raw(true)
-	stdscr:keypad(true)
-	stdscr:timeout(100)
-	stdscr:scrollok(false)
-	stdscr:clear()
-	stdscr:refresh()
+	io.write(T.smcup())
+	io.write(T.smkx())
+	io.write(T.clear())
 
 	local eventFilter
 
-	while alive and coroutine.status(co) ~= 'dead' do
-		local clock = os.time()
+	luv.tty_set_mode(stdin, 1)
+	luv.read_start(stdin, function(_, data)
+		-- print(pl.pretty.write(data))
+
+		local function sendKey(key, test, char)
+			if (#test == 1 or (#test == 2 and test:sub(1, 1) == '\27')) and char > 9 and char < 127 and char ~= 13 and char ~= 26 and char ~= 20 and char ~= 27 and char ~= 30 then
+				eventQueue[#eventQueue + 1] = { 'char', test }
+			end
+			eventQueue[#eventQueue + 1] = { 'key', key }
+		end
 		
-		for id, time in pairs(timers) do
-			-- env.print(id, clock, env.textutils.serialize(time), os.difftime(clock, time[1]))
-			if os.difftime(clock, time[1]) >= time[2] then
-				-- env.print(id)
-				eventQueue[#eventQueue + 1] = { 'timer', id }
-				timers[id] = nil
+		local start = 1
+		while start <= #data do
+			local test = ''
+			local i = start
+			while true do
+				local char = string.byte(data:sub(i, i))
+				test = test .. data:sub(i, i)
+				i = i + 1
+
+				if test == '\20' then
+					eventQueue[#eventQueue + 1] = { 'terminate' }
+					break
+				elseif test == '\3' then
+					os.exit()
+				end
+
+				local key = keys[test]
+				if key then
+					sendKey(key, test, char)
+					break
+				end
+
+				if #test >= #data then
+					local found = false
+					if test:sub(1, 1) == '\27' then
+						for i = 2, #test do
+							local test_ = test:sub(2, i)
+							local key = keys[test_]
+							if key then
+								eventQueue[#eventQueue + 1] = { 'key', 56 }
+								sendKey(key, test_, char)
+								found = true
+								break
+							end
+						end
+					end
+					if not found then
+						env.print('unknown key seq: ' .. pl.pretty.write(test))
+					end
+					break
+				end
 			end
+			start = i
 		end
+	end)
 
-		local char = stdscr:getch()
+	while alive and coroutine.status(co) ~= 'dead' do
+		-- local clock = os.time()
+		--
+		-- for id, time in pairs(timers) do
+		-- 	-- env.print(id, clock, env.textutils.serialize(time), os.difftime(clock, time[1]))
+		-- 	if os.difftime(clock, time[1]) >= time[2] then
+		-- 		-- env.print(id)
+		-- 		eventQueue[#eventQueue + 1] = { 'timer', id }
+		-- 		timers[id] = nil
+		-- 	end
+		-- end
 
-		if type(char) == 'number' then
-			if char == 3 then
-				-- print('^c')
-				alive = false
-				break
-			end
-
-			if char == 20 then
-				eventQueue[#eventQueue + 1] = { 'terminate' }
-			end
-
-			if char > 9 and char < 127 and char ~= 13 and char ~= 26 and char ~= 20 and char ~= 27 and char ~= 30 then
-				eventQueue[#eventQueue + 1] = { 'char', string.char(char) }
-			end
-
-			if keys[char] then
-				local key = keys[char]
-				eventQueue[#eventQueue + 1] = { 'key', key }
-
-				-- if (key >= keys[string.byte '1'] and key <= keys[string.byte '=']) or
-				--    (key >= keys[string.byte '\t'] and key <= keys[string.byte 'p']) or
-				--    (key >= keys[string.byte 'a'] and key <= keys[string.byte '`']) or
-				--    (key >= keys[string.byte '\\'] and key <= keys[string.byte '/']) or
-				--    (key == keys[string.byte '*']) or
-				--    (key == keys[string.byte ' ']) or
-				--    (key >= keys[string.byte '^'] and key <= keys[string.byte '_']) then
-				-- 	thread:queue('char', string.char(char))
-				-- end
-			elseif ignoredKeys[char] == nil then
-				env.print('unknown key: ' .. tostring(char))
-			end
-		end
+		luv.run(#eventQueue >= 1 and 'nowait' or 'once')
 
 		while #eventQueue >= 1 do
 			local ev = table.remove(eventQueue, 1)
@@ -708,33 +790,24 @@ return function(dir, ...)
 				-- 	error('Too long without yielding', 2)
 				-- end, '', 35000)
 				local ok, err = coroutine.resume(co, unpack(ev, 1, ev.n))
+				-- print(unpack(ev), 'end')
+				-- print(alive, coroutine.status(co))
 				-- debug.sethook(co)
 				if ok then
 					eventFilter = err
 				else
-					stdscr:clear()
+					io.write(T.clear)
 					-- red on black
-					env.term.setTextColor(math.pow(2, 14))
-					env.term.setBackgroundColor(math.pow(2, 0))
-					stdscr:mvaddstr(0, 0, err)
-					stdscr:mvaddstr(1, 0, "Press Control-c to exit")
-					while stdscr:getch() ~= 3 do end
+					-- env.term.setTextColor(math.pow(2, 14))
+					-- env.term.setBackgroundColor(math.pow(2, 0))
+					-- stdscr:mvaddstr(0, 0, err)
+					-- stdscr:mvaddstr(1, 0, "Press Control-c to exit")
+					-- while stdscr:getch() ~= 3 do end
 					error(err)
 				end
 				break
 			end
 		end
-
-		stdscr:refresh()
+		io.flush()
 	end
-
-	-- while stdscr:getch() ~= 3 do end
-
-	curses.echo(true)
-	curses.nl(true)
-	curses.raw(false)
-	stdscr:keypad(false)
-	stdscr:scrollok(false)
-
-	curses.endwin()
 end
