@@ -2,7 +2,7 @@
 [size=6][b]Termu[/b][/size]
 [b]A ComputerCraft Emulator for the Terminal[/b]
 
-This is a simple emulator written in Lua using Curses.
+This is a simple emulator written in Lua.
 It definitely doesn't have perfect emulation (e.g. LuaJ string bug, error checking).
 But it's pretty lightweight, supports very old versions of CC and with a couple small tweaks to the ROM can be automated (just in case you want to do that).
 It's only been tested on Linux, but it should work on OS X and you might be able to get it to work on Windows (using MinGW or Cygwin or something).
@@ -46,12 +46,23 @@ Either clone [url=https://github.com/alekso56/ComputercraftLua]alekso56/Computer
 In a terminal run:
 [code]
 luarocks install penlight
-luarocks install luaposix
+luarocks install luv
 [/code]
 
 To start the emulator, run in a terminal in the directory the contains [i]cli.lua[/i]:
 [code]
 lua cli.lua . # replace with where you want the computer's root directory to be
 [/code]
+[/spoiler]
+
+[center][size=5][b]Plans / ToDo[/b][/size][/center]
+[spoiler]
+[list]
+[*] Better filesystem (support for more mounts, etc..)
+[*] HTTP API
+[*] Rednet
+[*] Better compatibility (error checking, etc..)
+[*] Disks
+[/list]
 [/spoiler]
 [/center]
