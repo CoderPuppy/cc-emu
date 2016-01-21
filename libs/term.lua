@@ -44,7 +44,7 @@ local hex = {
 	['e'] = 14;
 	['f'] = 15;
 }
-for i = 0, 7 do
+for i = 0, 9 do
 	hex[tostring(i)] = i
 end
 
@@ -71,7 +71,7 @@ termNat = {
 	end;
 	clearLine = function()
 		termNat.setCursorPos(cursorY, 1)
-		prev.io.write(T.el)
+		prev.io.write(T.el())
 		termNat.setCursorPos(cursorY, cursorX)
 	end;
 	isColour = function() return true end;
@@ -110,6 +110,7 @@ termNat = {
 		return ccColorFor(backColor)
 	end;
 	write = function(text)
+		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
 		prev.io.write(text)
 		termNat.setCursorPos(cursorX + #text, cursorY)
@@ -128,19 +129,21 @@ termNat = {
 	end;
 	setCursorBlink = function() end;
 	scroll = function(n)
-		prev.io.write(T.cup(0, 0))
+		n = n or 1
+		local w, h = luv.tty_get_winsize(stdin)
+		prev.io.write(n < 0 and T.cup(0, 0) or T.cup(h, w))
 		local txt = T[n < 0 and 'ri' or 'ind']()
 		prev.io.write(txt:rep(math.abs(n)))
 
-		-- if n > 0 then
-		-- 	stdscr:move(19 - n, 0)
-		-- 	stdscr:clrtobot()
-		-- elseif n < 0 then
-		-- 	for i = 0, n do
-		-- 		stdscr:move(i, 0)
-		-- 		stdscr:clrtoeol()
-		-- 	end
-		-- end
+		if n > 0 then
+			prev.io.write(T.cup(h - n, 0))
+			prev.io.write(T.clr_eos())
+		elseif n < 0 then
+			for i = 0, n do
+				prev.io.write(T.cup(i, 0))
+				prev.io.write(T.clr_eol())
+			end
+		end
 
 		termNat.setCursorPos(cursorX, cursorY)
 	end
