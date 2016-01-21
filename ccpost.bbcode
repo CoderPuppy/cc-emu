@@ -12,14 +12,15 @@ It's only been tested on Linux, but it should work on OS X and you might be able
 
 [size=5][b]Recomended Installation[/b][/size]
 [spoiler]
-First install [url=http://lua.org]Lua[/url]:
+First install the dependencies:
 Arch Linux:
 [code]
 pacman -S lua
+# install termcap from the AUR
 [/code]
 Ubuntu (and most other Debian-based distros):
 [code]
-apt-get install lua5.2
+apt-get install lua5.2 libncurses5-dev
 [/code]
 
 Install [url=https://luarocks.org]LuaRocks[/url]:
@@ -47,6 +48,7 @@ In a terminal run:
 [code]
 luarocks install penlight
 luarocks install luv
+luarocks install terminfo
 [/code]
 
 To start the emulator, run in a terminal in the directory the contains [i]cli.lua[/i]:

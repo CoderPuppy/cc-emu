@@ -6,6 +6,7 @@
 - [LuaJIT](http://luajit.org/) with Lua 5.2 compatibility or [Lua 5.2 or 5.3](http://www.lua.org/) (only works for CC 1.74 and above)
 - [Penlight](http://stevedonovan.github.io/Penlight/api/index.html)
 - [luv](https://github.com/luvit/luv)
+- [terminfo](http://www.pjb.com.au/comp/lua/terminfo.html)
 
 ### Compatibility
 This version has been cursorily tested with:
