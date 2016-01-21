@@ -1,51 +1,3 @@
-local _colors = {
-	[1] = "white";
-	[2] = "orange";
-	[4] = "magenta";
-	[8] = "lightBlue";
-	[16] = "yellow";
-	[32] = "lime";
-	[64] = "pink";
-	[128] = "gray";
-	[256] = "lightGray";
-	[512] = "cyan";
-	[1024] = "purple";
-	[2048] = "blue";
-	[4096] = "brown";
-	[8192] = "green";
-	[16384] = "red";
-	[32768] = "black";
-}
-local ansiColor = {
-	    white = {7, false}; -- white
-	   orange = {1,  true}; -- bright red
-	  magenta = {5, false}; -- magenta
-	lightBlue = {4,  true}; -- bright blue
-	   yellow = {3,  true}; -- bright yellow
-	     lime = {2,  true}; -- bright green
-	     pink = {5, false}; -- magenta
-	     gray = {0, false}; -- black
-	lightGray = {0, false}; -- black
-	     cyan = {6, false}; -- cyan
-	   purple = {5, false}; -- magenta
-	     blue = {4, false}; -- blue
-	    brown = {3, false}; -- yellow
-	    green = {2, false}; -- green
-	      red = {1, false}; -- red
-	    black = {0, false}; -- black
-}
-local hex = {
-	['a'] = 10;
-	['b'] = 11;
-	['c'] = 12;
-	['d'] = 13;
-	['e'] = 14;
-	['f'] = 15;
-}
-for i = 0, 7 do
-	hex[tostring(i)] = i
-end
-
 local _keys = {
 	nil; -- none
 	{'1', '!'};
@@ -342,172 +294,16 @@ return function(dir, ...)
 		bit = _bit
 		_G = env
 
-		local runRom
-		do -- FS
-			local romPath = pl.path.normpath(pl.path.join(dirname, 'cc'))
-			local function findRomFile(path)
-				return pl.path.normpath(pl.path.join(romPath, path))
+		local function loadLib(lib, ...)
+			local fn = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
+			if setfenv then
+				setfenv(fn, _G)
 			end
-
-			local function betterifyPath(path)
-				local oldPath
-				while oldPath ~= path do
-					oldPath = path
-
-					if path:sub(1, 1) == '/' then
-						path = path:sub(2)
-					end
-
-					if path:sub(1, 2) == './' then
-						path = path:sub(2)
-					end
-				end
-
-				return path
-			end
-
-			local function findPath(path)
-				path = betterifyPath(path)
-
-				if path:sub(1, 3) == 'rom' then
-					return findRomFile(path)
-				end
-
-				return pl.path.normpath(pl.path.join(dir, path))
-			end
-
-			function runRom(path, ...)
-				local fn
-				if setfenv then
-					fn = prev.loadfile(findRomFile(path))
-					setfenv(fn, _G)
-				else
-					fn = prev.loadfile(findRomFile(path), 'bt', _G)
-				end
-				return fn(...)
-			end
-
-			fs = {
-				isReadOnly = function(path)
-					return betterifyPath(path):sub(1, 3) == 'rom'
-				end;
-
-				delete = function(path)
-					path = findPath(path)
-					pl.file.delete(path)
-				end;
-
-				move = function(src, dest)
-					src = findPath(src)
-					dest = findPath(dest)
-					pl.file.move(src, dest)
-				end;
-
-				copy = function(src, dest)
-					src = findPath(src)
-					dest = findPath(dest)
-					pl.file.copy(src, dest)
-				end;
-
-				list = function(path)
-					path = pl.path.normpath(pl.path.join(findPath(path), '.'))
-					local files = {}
-
-					if path == dir then
-						files[#files + 1] = 'rom'
-					end
-
-					for file in pl.path.dir(path) do
-						files[#files + 1] = file
-					end
-
-					files = pl.tablex.map(pl.path.basename, files)
-					table.sort(files)
-					return files
-				end;
-
-				open = function(path, mode)
-					local file = prev.io.open(findPath(path), mode)
-
-					if file == nil then return nil end
-
-					local h = {}
-
-					if mode == 'r' then
-						function h.readAll()
-							return file:read('*a')
-						end
-
-						function h.readLine()
-							return file:read('*l')
-						end
-					elseif mode == 'w' or mode == 'a' then
-						function h.write(data)
-							file:write(data)
-						end
-
-						function h.writeLine(data)
-							file:write(data)
-							file:write('\n')
-						end
-
-						function h.flush()
-							file:flush()
-						end
-					end
-
-					function h.close()
-						file:close()
-					end
-
-					return h
-				end;
-
-				exists = function(path)
-					return pl.path.exists(findPath(path)) ~= false
-				end;
-
-				isDir = function(path)
-					return pl.path.isdir(findPath(path))
-				end;
-
-				combine = function(a, b)
-					local function doIt()
-						if a == '' then
-							a = '/'
-						end
-
-						if a:sub(1, 1) ~= '/' and a:sub(1, 2) ~= './' then
-							a = '/' .. a
-						end
-
-						if b == '.' then
-							return a
-						end
-
-						if a == '/' and b == '..' then
-							return '..'
-						end
-
-						if a:sub(-2) == '..' and b == '..' then
-							return a .. '/..'
-						end
-
-						return pl.path.normpath(pl.path.join(a, b))
-					end
-
-					local res = doIt()
-
-					if res:sub(1, 1) == '/' then
-						res = res:sub(2)
-					end
-
-					return res
-				end;
-
-				getName = function(path) return pl.path.basename(path) end
-			}
+			return fn(...)
 		end
+
+		local runRom
+		fs, runRom = loadLib('fs', prev, pl, dirname, dir)
 
 		do -- OS
 			os = {
@@ -542,134 +338,9 @@ return function(dir, ...)
 			}
 		end
 
-		do -- Term
-			local cursorX, cursorY = 1, 1
-			local textColor, backColor = 0, 15
-			local log2 = math.log(2)
-
-			local function ccColorFor(c)
-				if type(c) ~= 'number' or c < 0 or c > 15 then
-					error('that\'s not a valid color: ' .. tostring(c))
-				end
-
-				return math.pow(2, c)
-			end
-
-			local function fromHexColor(h)
-				return hex[h] or error('not a hex color: ' .. tostring(h))
-			end
-
-			local termNat
-			termNat = {
-				clear = function()
-					prev.io.write(T.clear())
-				end;
-				clearLine = function()
-					termNat.setCursorPos(cursorY, 1)
-					prev.io.write(T.el)
-					termNat.setCursorPos(cursorY, cursorX)
-				end;
-				isColour = function() return true end;
-				isColor = function() return true end;
-				getSize = function()
-					local y, x = luv.tty_get_winsize(stdin)
-					return x, y
-					-- return 52, 19
-				end;
-				getCursorPos = function() return cursorX, cursorY end;
-				setCursorPos = function(x, y)
-					if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
-					cursorX, cursorY = x, y
-
-					prev.io.write(T.cup(cursorY - 1, cursorX - 1))
-				end;
-				setTextColour = function(...) return termNat.setTextColor(...) end;
-				setTextColor = function(c)
-					textColor = math.log(c) / log2
-
-					local color = ansiColor[_colors[c] ]
-					prev.io.write(T.setaf(color[1]))
-					prev.io.write(T[color[2] and 'bold' or 'sgr0']())
-				end;
-				getTextColour = function(...) return termNat.getTextColor(...) end;
-				getTextColor = function()
-					return ccColorFor(textColor)
-				end;
-				setBackgroundColour = function(...) return termNat.setBackgroundColor(...) end;
-				setBackgroundColor = function(c)
-					backColor = math.log(c) / log2
-
-					prev.io.write(T.setab(ansiColor[_colors[c] ][1]))
-				end;
-				getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
-				getBackgroundColor = function()
-					return ccColorFor(backColor)
-				end;
-				write = function(text)
-					text = text:gsub('[\n\r]', '?')
-					prev.io.write(text)
-					termNat.setCursorPos(cursorX + #text, cursorY)
-				end;
-				blit = function(text, textColors, backColors)
-					text = text:gsub('[\n\r]', '?')
-
-					if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
-
-					for i = 1, #text do
-						termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
-						termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
-						prev.io.write(text:sub(i, i))
-					end
-					cursorX = cursorX + #text
-				end;
-				setCursorBlink = function() end;
-				scroll = function(n)
-					prev.io.write(T.cup(0, 0))
-					prev.io.write(T[n < 0 and 'rin' or 'indn'](math.abs(n)))
-
-					-- if n > 0 then
-					-- 	stdscr:move(19 - n, 0)
-					-- 	stdscr:clrtobot()
-					-- elseif n < 0 then
-					-- 	for i = 0, n do
-					-- 		stdscr:move(i, 0)
-					-- 		stdscr:clrtoeol()
-					-- 	end
-					-- end
-
-					termNat.setCursorPos(cursorX, cursorY)
-				end
-			}
-
-			term = termNat
-		end--]]
-
-		--[[do --term
-			local cursorPos = {0, 0}
-			local fg = 1
-			local bg = 32768
-			local blink = true
-			local termNat; termNat = {
-				isColor = function() return false end;
-				isColour = function() return false end;
-				getCursorPos = function() return unpack(cursorPos) end;
-				setCursorPos = function(x, y) cursorPos = {x, y} end;
-				getBackgroundColor = function() return bg end;
-				setBackgroundColor = function(c) bg = c end;
-				getBackgroundColour = function() return bg end;
-				setBackgroundColour = function(c) bg = c end;
-				getTextColor = function() return fg end;
-				setTextColor = function(c) fg = c end;
-				getTextColour = function() return fg end;
-				setTextColour = function(c) fg = c end;
-				getCursorBlink = function() return blink end;
-				setCursorBlink = function(b) blink = b end;
-				getSize = function() return 80, 19 end;
-				write = function(str) prev.io.write(str) end;
-				scroll = function() end;
-			}
-			term = termNat
-		end--]]
+		termNat = loadLib('term', prev, luv, T, stdin)
+		-- termNat = loadLib('term-fake')
+		term = termNat
 
 		do -- RS
 			redstone = {
@@ -687,20 +358,27 @@ return function(dir, ...)
 			}
 		end
 
-		xpcall(runRom, function(err)
-			term.setTextColor(math.pow(2, 0))
-			term.setBackgroundColor(math.pow(2, 14))
-			term.clear()
-			print(err)
+		local ok, err = xpcall(runRom, function(err)
 			local level = 5
+			local stack = {}
 			while true do
 				local _, msg = pcall(error, '@', level)
 				if msg == '@' then break end
-				print(msg)
+				stack[#stack + 1 ] = msg
 				level = level + 1
 			end
-			while stdscr:getch() ~= 3 do end
+			return {err = err, stack = stack}
 		end, 'bios.lua', ...)
+		if not ok then
+			term.setTextColor(math.pow(2, 0))
+			term.setBackgroundColor(math.pow(2, 14))
+			term.setCursorPos(1, 1)
+			term.clear()
+			print(err.err)
+			for _, frame in ipairs(err.stack) do
+				print(frame)
+			end
+		end
 	end
 	if setfenv then setfenv(create, env) end
 
@@ -770,17 +448,6 @@ return function(dir, ...)
 	end)
 
 	while alive and coroutine.status(co) ~= 'dead' do
-		-- local clock = os.time()
-		--
-		-- for id, time in pairs(timers) do
-		-- 	-- env.print(id, clock, env.textutils.serialize(time), os.difftime(clock, time[1]))
-		-- 	if os.difftime(clock, time[1]) >= time[2] then
-		-- 		-- env.print(id)
-		-- 		eventQueue[#eventQueue + 1] = { 'timer', id }
-		-- 		timers[id] = nil
-		-- 	end
-		-- end
-
 		luv.run(#eventQueue >= 1 and 'nowait' or 'once')
 
 		while #eventQueue >= 1 do
@@ -790,24 +457,25 @@ return function(dir, ...)
 				-- 	error('Too long without yielding', 2)
 				-- end, '', 35000)
 				local ok, err = coroutine.resume(co, unpack(ev, 1, ev.n))
-				-- print(unpack(ev), 'end')
-				-- print(alive, coroutine.status(co))
+				io.flush()
 				-- debug.sethook(co)
 				if ok then
 					eventFilter = err
 				else
-					io.write(T.clear)
 					-- red on black
-					-- env.term.setTextColor(math.pow(2, 14))
-					-- env.term.setBackgroundColor(math.pow(2, 0))
-					-- stdscr:mvaddstr(0, 0, err)
-					-- stdscr:mvaddstr(1, 0, "Press Control-c to exit")
-					-- while stdscr:getch() ~= 3 do end
-					error(err)
+					print('there\'s an error')
+					termNat.setTextColor(math.pow(2, 14))
+					termNat.setBackgroundColor(math.pow(2, 0))
+					termNat.clear()
+					termNat.setCursorPos(1, 1)
+					termNat.write(err)
+					alive = false
+					-- error(err)
 				end
 				break
 			end
 		end
-		io.flush()
 	end
+	luv.tty_set_mode(stdin, 0)
+	luv.loop_close()
 end
