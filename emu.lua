@@ -82,7 +82,9 @@ local _keys = {
 	nil; -- num pad 3
 	nil; -- num pad 0
 	nil; -- num pad dec
-	nil; nil; nil;
+	nil;
+	nil;
+	nil;
 	'\27[23~'; -- f11 -- TODO: this could be wrong
 	'\27[24~'; -- f12
 	nil;
@@ -193,8 +195,6 @@ local _keys = {
 	nil;
 	nil;
 	nil;
-	nil;
-	nil;
 	nil; -- pause
 	nil;
 	'\27[1~'; -- home
@@ -209,6 +209,8 @@ local _keys = {
 	'\27OB'; -- down
 	'\27[6~'; -- page down
 	'\27[2~'; -- insert
+	nil;
+	nil;
 }
 
 local keys = {}
@@ -221,24 +223,6 @@ for cc, real in pairs(_keys) do
 	else
 		keys[real] = cc
 	end
-end
-
-local ignoredKeys = {
-	[40] = true; -- open paren
-	[41] = true; -- close paren
-	[63] = true; -- question mark
-	[20] = true; -- ^T
-	[27] = true; -- ^[
-}
-
--- Ignore uppercase
-for i = 65, 90 do
-	ignoredKeys[i] = true
-end
-
--- Ignore ctrl keys
-for i = 1, 22 do
-	ignoredKeys[i] = true
 end
 
 local pl = {
@@ -464,11 +448,15 @@ return function(dir, ...)
 				else
 					-- red on black
 					print('there\'s an error')
-					termNat.setTextColor(math.pow(2, 14))
-					termNat.setBackgroundColor(math.pow(2, 0))
-					termNat.clear()
-					termNat.setCursorPos(1, 1)
-					termNat.write(err)
+					if termNat then
+						termNat.setTextColor(math.pow(2, 14))
+						termNat.setBackgroundColor(math.pow(2, 0))
+						termNat.clear()
+						termNat.setCursorPos(1, 1)
+						termNat.write(err)
+					else
+						print(err)
+					end
 					alive = false
 					-- error(err)
 				end
