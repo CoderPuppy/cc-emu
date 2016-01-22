@@ -271,6 +271,7 @@ return function(dir, ...)
 		env.prev = prev -- VERY BAD
 		bit = _bit
 		_G = env
+		_HOST = 'termu'
 
 		local function loadLib(lib, ...)
 			local fn, err = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
