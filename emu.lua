@@ -374,7 +374,7 @@ return function(dir, ...)
 	io.write(T.smcup())
 	io.write(T.keypad_xmit())
 	io.write(T.clear())
-	fcntl.fcntl(1, fcntl.F_SETFL, bit.bor(fcntl.fcntl(1, fcntl.F_GETFL), fcntl.O_NONBLOCK))
+	fcntl.fcntl(1, fcntl.F_SETFL, _bit.bor(fcntl.fcntl(1, fcntl.F_GETFL), fcntl.O_NONBLOCK))
 
 	local eventFilter
 
