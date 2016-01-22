@@ -186,10 +186,10 @@ return {
 		pat = pl.path.normpath(pat or '')
 		pat = pat:gsub('%*%*', '*')
 		local results = {}
-		for _, path in ipairs(glob(findPath(pat))) do
+		for _, path in ipairs(glob(findPath(pat)) or {}) do
 			results[#results + 1] = pl.path.relpath(path, dir)
 		end
-		for _, path in ipairs(glob(findRomFile(pat))) do
+		for _, path in ipairs(glob(findRomFile(pat)) or {}) do
 			results[#results + 1] = pl.path.relpath(path, romPath)
 		end
 		return results
