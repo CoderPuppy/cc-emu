@@ -273,7 +273,10 @@ return function(dir, ...)
 		_G = env
 
 		local function loadLib(lib, ...)
-			local fn = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
+			local fn, err = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
+			if err then
+				error(err)
+			end
 			if setfenv then
 				setfenv(fn, _G)
 			end

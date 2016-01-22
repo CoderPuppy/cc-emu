@@ -1,4 +1,7 @@
 local prev, pl, dirname, dir = ...
+
+local glob = prev.require 'posix.glob'.glob
+
 local romPath = pl.path.normpath(pl.path.join(dirname, 'cc'))
 local function findRomFile(path)
 	return pl.path.normpath(pl.path.join(romPath, path))
@@ -16,10 +19,17 @@ local function betterifyPath(path)
 		if path:sub(1, 2) == './' then
 			path = path:sub(2)
 		end
+
+		if path:sub(-2) == '/.' then
+			path = path:sub(1, -3)
+		end
 	end
 
 	return path
 end
+dir = '/' .. betterifyPath(dir)
+dirname = '/' .. betterifyPath(dirname)
+romPath = '/' .. betterifyPath(pl.path.abspath(romPath))
 
 local function findPath(path)
 	path = betterifyPath(path)
@@ -32,12 +42,12 @@ local function findPath(path)
 end
 
 local function runRom(path, ...)
-	local fn
+	local fn, err = prev.loadfile(findRomFile(path), 't', _G)
+	if err then
+		error(err)
+	end
 	if setfenv then
-		fn = prev.loadfile(findRomFile(path))
 		setfenv(fn, _G)
-	else
-		fn = prev.loadfile(findRomFile(path), 't', _G)
 	end
 	return fn(...)
 end
@@ -170,5 +180,18 @@ return {
 		return res
 	end;
 
-	getName = function(path) return pl.path.basename(path) end
+	getName = function(path) return pl.path.basename(path) end;
+
+	find = function(pat)
+		pat = pl.path.normpath(pat or '')
+		pat = pat:gsub('%*%*', '*')
+		local results = {}
+		for _, path in ipairs(glob(findPath(pat))) do
+			results[#results + 1] = pl.path.relpath(path, dir)
+		end
+		for _, path in ipairs(glob(findRomFile(pat))) do
+			results[#results + 1] = pl.path.relpath(path, romPath)
+		end
+		return results
+	end;
 }, runRom
