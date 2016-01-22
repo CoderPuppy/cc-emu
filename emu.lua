@@ -1,3 +1,8 @@
+require 'luarocks.index'
+local T = require(jit and 'terminfo-luajit' or 'terminfo-norm')
+local luv = require 'luv'
+local fcntl = require 'posix.fcntl'
+
 local _keys = {
 	nil; -- none
 	{'1', '!'};
@@ -12,8 +17,8 @@ local _keys = {
 	{'0', ')'};
 	{'-', '_'};
 	{'=', '+'};
-	'\8'; -- backspace
-	{'\9', '\27[Z'};
+	T.key_backspace(); -- backspace
+	{T.tab(), T.key_btab()};
 	{'q', 'Q'};
 	{'w', 'W'};
 	{'e', 'E'};
@@ -57,16 +62,16 @@ local _keys = {
 	nil; -- left alt
 	' ';
 	nil; -- caps lock
-	'\27OP'; -- f1
-	'\27OQ'; -- f2
-	'\27OR'; -- f3
-	'\27OS'; -- f4
-	'\27[15~'; -- f5
-	'\27[17~'; -- f6
-	'\27[18~'; -- f7
-	'\27[19~'; -- f8
-	'\27[20~'; -- f9
-	'\27[21~'; -- f10
+	T.key_f1(); -- f1
+	T.key_f2(); -- f2
+	T.key_f3(); -- f3
+	T.key_f4(); -- f4
+	T.key_f5(); -- f5
+	T.key_f6(); -- f6
+	T.key_f7(); -- f7
+	T.key_f8(); -- f8
+	T.key_f9(); -- f9
+	T.key_f10(); -- f10
 	nil; -- numlock
 	nil; -- scrolllock
 	nil; -- num pad 7
@@ -85,8 +90,8 @@ local _keys = {
 	nil;
 	nil;
 	nil;
-	'\27[23~'; -- f11 -- TODO: this could be wrong
-	'\27[24~'; -- f12
+	T.key_f11(); -- f11 -- TODO: this could be wrong
+	T.key_f12(); -- f12
 	nil;
 	nil;
 	nil;
@@ -197,19 +202,19 @@ local _keys = {
 	nil;
 	nil; -- pause
 	nil;
-	'\27[1~'; -- home
-	'\27OA'; -- up
-	'\27[5~'; -- page up
+	T.key_home(); -- home
+	T.key_up(); -- up
+	T.key_ppage(); -- page up
 	nil;
-	'\27OD'; -- left
+	T.key_left(); -- left
 	nil;
-	'\27OC'; -- right
+	T.key_right(); -- right
 	nil;
-	'\27[4~'; -- end
-	'\27OB'; -- down
-	'\27[6~'; -- page down
-	'\27[2~'; -- insert
-	nil;
+	T.key_end(); -- end
+	T.key_down(); -- down
+	T.key_npage(); -- page down
+	T.key_ic(); -- insert
+	nil; -- delete
 	nil;
 }
 
@@ -236,22 +241,6 @@ local pl = {
 local _bit = bit32 or require 'bit'
 local unpack = _G.unpack or table.unpack
 
-require 'luarocks.index'
-local terminfo = require 'terminfo'
-local T = setmetatable({}, {
-	__index = function(t, k)
-		local v = terminfo.get(k)
-		if type(v) == 'string' then
-			return function(...)
-				return terminfo.tparm(v, ...)
-			end
-		else
-			return v
-		end
-	end;
-})
-local luv = require 'luv'
-
 local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
 
 local prev = _G
@@ -266,6 +255,11 @@ return function(dir, ...)
 	local termNat
 
 	local stdin = luv.new_tty(0, true)
+	local function exit()
+		io.write(T.keypad_local())
+		luv.tty_set_mode(stdin, 0)
+		luv.loop_close()
+	end
 
 	local env = {}
 	function create(...)
@@ -342,7 +336,12 @@ return function(dir, ...)
 			}
 		end
 
-		local ok, err = xpcall(runRom, function(err)
+		http = loadLib('http', prev, luv, pl, dirname, eventQueue)
+
+		local args = { n = select('#', ...), ... }
+		local ok, err = xpcall(function()
+			runRom('bios.lua', unpack(args, 1, args.n))
+		end, function(err)
 			local level = 5
 			local stack = {}
 			while true do
@@ -352,15 +351,15 @@ return function(dir, ...)
 				level = level + 1
 			end
 			return {err = err, stack = stack}
-		end, 'bios.lua', ...)
+		end)
 		if not ok then
 			term.setTextColor(math.pow(2, 0))
 			term.setBackgroundColor(math.pow(2, 14))
 			term.setCursorPos(1, 1)
 			term.clear()
-			print(err.err)
+			prev.print(err.err)
 			for _, frame in ipairs(err.stack) do
-				print(frame)
+				prev.print(frame)
 			end
 		end
 	end
@@ -369,8 +368,9 @@ return function(dir, ...)
 	local co = coroutine.create(create)
 
 	io.write(T.smcup())
-	io.write(T.smkx())
+	io.write(T.keypad_xmit())
 	io.write(T.clear())
+	fcntl.fcntl(1, fcntl.F_SETFL, bit.bor(fcntl.fcntl(1, fcntl.F_GETFL), fcntl.O_NONBLOCK))
 
 	local eventFilter
 
@@ -398,6 +398,7 @@ return function(dir, ...)
 					eventQueue[#eventQueue + 1] = { 'terminate' }
 					break
 				elseif test == '\3' then
+					exit()
 					os.exit()
 				end
 
@@ -464,6 +465,5 @@ return function(dir, ...)
 			end
 		end
 	end
-	luv.tty_set_mode(stdin, 0)
-	luv.loop_close()
+	exit()
 end

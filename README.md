@@ -7,10 +7,12 @@
 - [Penlight](http://stevedonovan.github.io/Penlight/api/index.html)
 - [luv](https://github.com/luvit/luv)
 - [terminfo](http://www.pjb.com.au/comp/lua/terminfo.html)
+- [luaposix](https://luaposix.github.io/luaposix)
 
 ### Compatibility
 This version has been cursorily tested with:
 
+- 1.78
 - 1.77
 - 1.74
 - 1.73

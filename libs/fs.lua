@@ -90,11 +90,21 @@ return {
 
 		if mode == 'r' then
 			function h.readAll()
-				return file:read('*a')
+				local data = file:read('*a')
+				if data then
+					data = data:gsub('\13', '\n')
+				end
+				-- prev.print('all', pl.pretty.write(data))
+				return data
 			end
 
 			function h.readLine()
-				return file:read('*l')
+				local line = file:read('*l')
+				if line then
+					line = line:gsub('[\13\n\r]*$', '')
+				end
+				-- prev.print('line', pl.pretty.write(line))
+				return line
 			end
 		elseif mode == 'w' or mode == 'a' then
 			function h.write(data)
