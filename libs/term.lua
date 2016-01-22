@@ -70,9 +70,9 @@ termNat = {
 		prev.io.write(T.clear())
 	end;
 	clearLine = function()
-		termNat.setCursorPos(cursorY, 1)
-		prev.io.write(T.el())
-		termNat.setCursorPos(cursorY, cursorX)
+		prev.io.write(T.cup(cursorY - 1, 0))
+		prev.io.write(T.clr_eol())
+		termNat.setCursorPos(cursorX, cursorY)
 	end;
 	isColour = function() return true end;
 	isColor = function() return true end;
