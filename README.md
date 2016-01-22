@@ -15,9 +15,14 @@ This version has been cursorily tested with:
 - 1.78
 - 1.77
 - 1.74
-- 1.73
-- 1.64
-- 1.6
+- 1.74pr17
+- 1.74pr16
+- 1.74pr14 (some terminal bugs)
+- 1.74pr13 (some terminal bugs)
+- 1.73 (some terminal bugs)
+- 1.64 (some terminal bugs)
+- 1.6 (some terminal bugs)
+- 1.58
 - 1.5
 - 1.41
 
