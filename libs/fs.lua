@@ -16,8 +16,12 @@ local function betterifyPath(path)
 			path = path:sub(2)
 		end
 
-		if path:sub(1, 2) == './' then
+		if path:sub(1, 2) == './' or path == '.' then
 			path = path:sub(2)
+		end
+
+		if path:sub(1, 3) == '../' or path == '..' then
+			path = path:sub(3)
 		end
 
 		if path:sub(-2) == '/.' then
@@ -32,6 +36,7 @@ dirname = '/' .. betterifyPath(dirname)
 romPath = '/' .. betterifyPath(pl.path.abspath(romPath))
 
 local function findPath(path)
+	path = pl.path.normpath(path)
 	path = betterifyPath(path)
 
 	if path:sub(1, 3) == 'rom' then
@@ -75,7 +80,7 @@ return {
 	end;
 
 	list = function(path)
-		path = pl.path.normpath(pl.path.join(findPath(path), '.'))
+		path = findPath(path)
 		local files = {}
 
 		if path == dir then
@@ -86,7 +91,6 @@ return {
 			files[#files + 1] = file
 		end
 
-		files = pl.tablex.map(pl.path.basename, files)
 		table.sort(files)
 		return files
 	end;
@@ -193,5 +197,10 @@ return {
 			results[#results + 1] = pl.path.relpath(path, romPath)
 		end
 		return results
+	end;
+
+	makeDir = function(path)
+		path = findPath(path)
+		pl.path.mkdir(path)
 	end;
 }, runRom

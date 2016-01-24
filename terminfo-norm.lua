@@ -1,3 +1,4 @@
+_G.unpack = _G.unpack or table.unpack
 local terminfo = require 'terminfo'
 return setmetatable({}, {
 	__index = function(t, k)

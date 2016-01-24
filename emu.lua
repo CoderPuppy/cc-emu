@@ -241,6 +241,8 @@ local pl = {
 local _bit = bit32 or require 'bit'
 local unpack = _G.unpack or table.unpack
 
+local unistd = require 'posix.unistd'
+
 local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
 
 local prev = _G
@@ -263,6 +265,7 @@ return function(dir, ...)
 
 	local env = {}
 	function create(...)
+		local args = { n = select('#', ...), ... }
 		local _ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
 			env[name] = prev[name]
@@ -316,7 +319,16 @@ return function(dir, ...)
 				shutdown = function()
 					alive = false
 					coroutine.yield()
-				end
+				end;
+				reboot = function()
+					-- local h = prev.io.popen('/bin/which lua')
+					-- local lua = h:read('*l')
+					-- h:close()
+					-- print(pl.pretty.write({lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)}}))
+					-- exit()
+					-- unistd.exec(lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)})
+					print 'Sorry, rebooting is not supported'
+				end;
 			}
 		end
 
@@ -342,7 +354,6 @@ return function(dir, ...)
 
 		http = loadLib('http', prev, luv, pl, dirname, eventQueue)
 
-		local args = { n = select('#', ...), ... }
 		local ok, err = xpcall(function()
 			runRom('bios.lua', unpack(args, 1, args.n))
 		end, function(err)
