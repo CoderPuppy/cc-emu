@@ -260,6 +260,7 @@ return function(dir, ...)
 
 	local stdin = luv.new_tty(0, true)
 	local function exit()
+		fcntl.fcntl(1, fcntl.F_SETFL, _bit.band(fcntl.fcntl(1, fcntl.F_GETFL), _bit.bnot(fcntl.O_NONBLOCK)))
 		io.write(T.keypad_local())
 		luv.tty_set_mode(stdin, 0)
 		luv.loop_close()
@@ -267,7 +268,6 @@ return function(dir, ...)
 
 	local env = {}
 	function create(...)
-		local args = { n = select('#', ...), ... }
 		local _ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
 			env[name] = prev[name]
@@ -277,6 +277,7 @@ return function(dir, ...)
 		bit = _bit
 		_G = env
 		_HOST = 'termu'
+		local args = { n = select('#', ...), ... }
 
 		local function loadLib(lib, ...)
 			local fn, err = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
