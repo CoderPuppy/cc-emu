@@ -257,10 +257,31 @@ return function(dir, ...)
 	local eventQueue = {{n = select('#', ...), ...}}
 	local timers = {}
 	local termNat
+	local starting_uptime = 0
+	do
+		local path = pl.path.join(config_path, 'uptime')
+		if pl.path.isfile(path) then
+			local h = io.open(path)
+			starting_uptime = tonumber(h:read '*a':match '^%s*(%d+)%s*') or 0
+			h:close()
+		end
+	end
 	local start_time = os.time()
+
+	local function uptime()
+		return os.difftime(os.time(), start_time) + starting_uptime
+	end
 
 	local stdin = luv.new_tty(0, true)
 	local function exit()
+		if not pl.path.isdir(config_path) then
+			pl.path.mkdir(config_path)
+		end
+		do
+			local h = io.open(pl.path.join(config_path, 'uptime'), 'w')
+			h:write(tostring(uptime()))
+			h:close()
+		end
 		fcntl.fcntl(1, fcntl.F_SETFL, _bit.band(fcntl.fcntl(1, fcntl.F_GETFL), _bit.bnot(fcntl.O_NONBLOCK)))
 		io.write(T.keypad_local())
 		luv.tty_set_mode(stdin, 0)
@@ -274,7 +295,7 @@ return function(dir, ...)
 			env[name] = prev[name]
 		end
 		env.unpack = unpack
-		env.prev = prev -- VERY BAD
+		-- env.prev = prev -- VERY BAD
 		bit = _bit
 		_G = env
 		_HOST = 'termu'
@@ -299,6 +320,7 @@ return function(dir, ...)
 				queueEvent = function(ev, ...)
 					eventQueue[#eventQueue + 1] = { n = select('#', ...) + 1, ev, ... }
 				end;
+
 				startTimer = function(time)
 					local id = #timers + 1
 					local timer = luv.new_timer()
@@ -318,12 +340,14 @@ return function(dir, ...)
 						luv.close(timer.timer)
 					end
 				end;
+
 				clock = prev.os.clock;
 				time = prev.os.time;
 				day = function()
 					-- increments every 20 minutes
-					return math.floor(prev.os.difftime(prev.os.time(), start_time) / 60 / 20) + 1
+					return math.floor(uptime() / 60 / 20) + 1
 				end;
+
 				shutdown = function()
 					alive = false
 					coroutine.yield()
