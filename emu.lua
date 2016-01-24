@@ -251,6 +251,8 @@ return function(dir, ...)
 	local cmd
 	local stdscr
 
+	local config_path = pl.path.join(dir, '.termu')
+
 	local alive = true
 	local eventQueue = {{n = select('#', ...), ...}}
 	local timers = {}
@@ -328,6 +330,52 @@ return function(dir, ...)
 					-- exit()
 					-- unistd.exec(lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)})
 					print 'Sorry, rebooting is not supported'
+				end;
+
+				getComputerID = function()
+					local path = pl.path.join(config_path, 'id')
+					if pl.path.isfile(path) then
+						local h, err = prev.io.open(path)
+						if err then
+							error(err)
+						end
+						local contents = h:read('*a'):match('^%s*(%d+)%s*$')
+						if not contents then
+							print('Invalid computer id')
+							return 0
+						end
+						h:close()
+						return tonumber(contents)
+					else
+						return 0
+					end
+				end;
+
+				getComputerLabel = function()
+					local path = pl.path.join(config_path, 'label')
+					if pl.path.isfile(path) then
+						local h, err = prev.io.open(path)
+						if err then
+							error(err)
+						end
+						local contents = h:read('*a')
+						h:close()
+						return contents
+					else
+						return nil
+					end
+				end;
+
+				setComputerLabel = function(label)
+					if not pl.path.isdir(config_path) then
+						pl.path.mkdir(config_path)
+					end
+					local h, err = prev.io.open(pl.path.join(config_path, 'label'), 'w')
+					if err then
+						error(err)
+					end
+					h:write(label)
+					h:close()
 				end;
 			}
 		end
