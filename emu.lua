@@ -257,6 +257,7 @@ return function(dir, ...)
 	local eventQueue = {{n = select('#', ...), ...}}
 	local timers = {}
 	local termNat
+	local start_time = os.time()
 
 	local stdin = luv.new_tty(0, true)
 	local function exit()
@@ -301,7 +302,7 @@ return function(dir, ...)
 				startTimer = function(time)
 					local id = #timers + 1
 					local timer = luv.new_timer()
-					luv.timer_start(timer, time, 0, function()
+					luv.timer_start(timer, time * 1000, 0, function()
 						timers[id] = nil
 						luv.timer_stop(timer)
 						luv.close(timer)
@@ -319,6 +320,10 @@ return function(dir, ...)
 				end;
 				clock = prev.os.clock;
 				time = prev.os.time;
+				day = function()
+					-- increments every 20 minutes
+					return math.floor(prev.os.difftime(prev.os.time(), start_time) / 60 / 20) + 1
+				end;
 				shutdown = function()
 					alive = false
 					coroutine.yield()
