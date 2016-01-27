@@ -256,6 +256,7 @@ return function(dir, ...)
 	local alive = true
 	local eventQueue = {{n = select('#', ...), ...}}
 	local timers = {}
+	local tick = {}
 	local termNat
 	local starting_uptime = 0
 	do
@@ -417,10 +418,26 @@ return function(dir, ...)
 		do -- RS
 			redstone = {
 				getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end;
-				setOutput = function() end;
+
+				getInput = function(...) return redstone.getAnalogInput(...) ~= 0 end;
+				getAnalogInput = function() return 0 end;
+
+				setOutput = function(...) return redstone.setAnalogOutput(..., 15) end;
+				getOutput = function(...) return redstone.getAnalogOutput(...) ~= 0 end;
+				
+				setAnalogOutput = function() end;
+				getAnalogOutput = function() return 0 end;
+
+				getBundledInput = function() return 0 end;
+				testBundledInput = function() return false end;
+
+				setBundledOutput = function() end;
+				getBundledOutput = function() return 0 end;
 			}
 			rs = redstone
 		end
+
+		loadLib('redstone-gpio', prev, pl, dir, tick, eventQueue)
 
 		do -- Peripheral
 			peripheral = {
@@ -525,9 +542,11 @@ return function(dir, ...)
 		end
 	end)
 
-	while alive and coroutine.status(co) ~= 'dead' do
+	tick[#tick + 1] = function()
 		luv.run(#eventQueue >= 1 and 'nowait' or 'once')
+	end
 
+	tick[#tick + 1] = function()
 		while #eventQueue >= 1 do
 			local ev = table.remove(eventQueue, 1)
 			if eventFilter == nil or ev[1] == eventFilter or ev[1] == 'terminate' then
@@ -556,6 +575,12 @@ return function(dir, ...)
 				end
 				break
 			end
+		end
+	end
+
+	while alive and coroutine.status(co) ~= 'dead' do
+		for _, tick in ipairs(tick) do
+			tick()
 		end
 	end
 	exit()
