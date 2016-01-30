@@ -6,26 +6,28 @@ local gpio_dir = pl.path.join(dir, '.termu', 'redstone-gpio')
 
 local gpios = {}
 
-for side in pl.path.dir(gpio_dir) do
-	if side ~= '.' and side ~= '..' then
-		local h = prev.io.open(pl.path.join(gpio_dir, side))
-		local data, err = h:read '*a'
-		if err then
-			error(err)
+if pl.path.isdir(gpio_dir) then
+	for side in pl.path.dir(gpio_dir) do
+		if side ~= '.' and side ~= '..' then
+			local h = prev.io.open(pl.path.join(gpio_dir, side))
+			local data, err = h:read '*a'
+			if err then
+				error(err)
+			end
+			h:close()
+			local pin, dir = data:match '^%s*(%d+)%s+([^%s]+)%s*$'
+			local gpio = GPIO(tonumber(pin), dir)
+			-- local gpio = {
+			-- 	write = function(self, out) end;
+			-- 	read = function(self) return false end;
+			-- 	poll = function(self) return false end;
+			-- }
+			gpio:write(false)
+			gpios[side] = {
+				gpio = gpio;
+				out = false;
+			}
 		end
-		h:close()
-		local pin, dir = data:match '^%s*(%d+)%s+([^%s]+)%s*$'
-		local gpio = GPIO(tonumber(pin), dir)
-		-- local gpio = {
-		-- 	write = function(self, out) end;
-		-- 	read = function(self) return false end;
-		-- 	poll = function(self) return false end;
-		-- }
-		gpio:write(false)
-		gpios[side] = {
-			gpio = gpio;
-			out = false;
-		}
 	end
 end
 
