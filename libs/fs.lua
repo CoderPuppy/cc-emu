@@ -88,7 +88,9 @@ return {
 		end
 
 		for file in pl.path.dir(path) do
-			files[#files + 1] = file
+			if file ~= '.' and file ~= '..' then
+				files[#files + 1] = file
+			end
 		end
 
 		table.sort(files)
