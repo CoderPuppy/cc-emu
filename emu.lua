@@ -17,7 +17,7 @@ local _keys = {
 	{'0', ')'};
 	{'-', '_'};
 	{'=', '+'};
-	T.key_backspace(); -- backspace
+	{T.key_backspace(), '\8', '\127'}; -- backspace
 	{T.tab(), T.key_btab()};
 	{'q', 'Q'};
 	{'w', 'W'};
