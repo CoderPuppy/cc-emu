@@ -112,18 +112,24 @@ termNat = {
 	write = function(text)
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
+		text = text:gsub('[\128-\255]', function(s)
+			local b = string.byte(s)
+			if b >= 128 and b <= 191 then
+				return '\194' .. s
+			else
+				return '\195' .. string.char(128 + b - 192)
+			end
+		end)
 		prev.io.write(text)
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
 	blit = function(text, textColors, backColors)
-		text = text:gsub('[\n\r]', '?')
-
 		if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
 
 		for i = 1, #text do
 			termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
 			termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
-			prev.io.write(text:sub(i, i))
+			termNat.write(text:sub(i, i))
 		end
 		cursorX = cursorX + #text
 	end;
