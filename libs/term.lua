@@ -112,13 +112,8 @@ termNat = {
 	write = function(text)
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
-		text = text:gsub('[\128-\255]', function(s)
-			local b = string.byte(s)
-			if b >= 128 and b <= 191 then
-				return '\194' .. s
-			else
-				return '\195' .. string.char(128 + b - 192)
-			end
+		text = text:gsub('[\128-\159]', function(s)
+			return '\240\157\132' .. string.char(string.byte(s) + 15)
 		end)
 		prev.io.write(text)
 		termNat.setCursorPos(cursorX + #text, cursorY)
