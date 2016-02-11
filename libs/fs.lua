@@ -109,9 +109,11 @@ return {
 				local data = file:read('*a')
 				if data then
 					data = data:gsub('\13', '\n')
+					-- prev.print('all', pl.pretty.write(data))
+					return data
+				else
+					return ''
 				end
-				-- prev.print('all', pl.pretty.write(data))
-				return data
 			end
 
 			function h.readLine()
