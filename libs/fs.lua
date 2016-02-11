@@ -64,7 +64,10 @@ return {
 
 	delete = function(path)
 		path = findPath(path)
-		pl.file.delete(path)
+		local ok, err = pl.file.delete(path)
+		if err then
+			error(err)
+		end
 	end;
 
 	move = function(src, dest)
