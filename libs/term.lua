@@ -113,7 +113,7 @@ termNat = {
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
 		text = text:gsub('[\128-\159]', function(s)
-			return '\240\157\132' .. string.char(string.byte(s) + 15)
+			return '\240\157\132' .. s
 		end)
 		prev.io.write(text)
 		termNat.setCursorPos(cursorX + #text, cursorY)
