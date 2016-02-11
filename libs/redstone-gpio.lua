@@ -1,4 +1,4 @@
-local prev, pl, dir, tick, eventQueue = ...
+local prev, pl, dir, tick, event_queue = ...
 
 local GPIO = prev.require 'periphery'.GPIO
 
@@ -80,6 +80,6 @@ tick[#tick + 1] = function()
 		any = any or gpio.gpio:poll(0)
 	end
 	if any then
-		eventQueue[#eventQueue + 1] = { 'redstone' }
+		event_queue[#event_queue + 1] = { 'redstone' }
 	end
 end

@@ -149,4 +149,7 @@ termNat = {
 	end
 }
 
+prev.io.write(T.smcup())
+prev.io.write(T.clear())
+
 return termNat

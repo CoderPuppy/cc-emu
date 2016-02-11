@@ -64,7 +64,10 @@ return {
 
 	delete = function(path)
 		path = findPath(path)
-		pl.file.delete(path)
+		local ok, err = pl.file.delete(path)
+		if err then
+			error(err)
+		end
 	end;
 
 	move = function(src, dest)
@@ -106,13 +109,17 @@ return {
 
 		if mode == 'r' then
 			function h.readAll()
-				local data = file:read('*a')
+				local data, err = file:read('*a')
 				if data then
 					data = data:gsub('\13', '\n')
 					-- prev.print('all', pl.pretty.write(data))
 					return data
 				else
-					return ''
+					if err then
+						error(err)
+					else
+						return ''
+					end
 				end
 			end
 
