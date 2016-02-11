@@ -88,7 +88,9 @@ return {
 		end
 
 		for file in pl.path.dir(path) do
-			files[#files + 1] = file
+			if file ~= '.' and file ~= '..' then
+				files[#files + 1] = file
+			end
 		end
 
 		table.sort(files)
@@ -107,9 +109,11 @@ return {
 				local data = file:read('*a')
 				if data then
 					data = data:gsub('\13', '\n')
+					-- prev.print('all', pl.pretty.write(data))
+					return data
+				else
+					return ''
 				end
-				-- prev.print('all', pl.pretty.write(data))
-				return data
 			end
 
 			function h.readLine()

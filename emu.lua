@@ -17,7 +17,7 @@ local _keys = {
 	{'0', ')'};
 	{'-', '_'};
 	{'=', '+'};
-	T.key_backspace(); -- backspace
+	{T.key_backspace(), '\8', '\127'}; -- backspace
 	{T.tab(), T.key_btab()};
 	{'q', 'Q'};
 	{'w', 'W'};
@@ -290,6 +290,15 @@ return function(dir, ...)
 	end
 
 	local env = {}
+	local function reboot()
+		-- local h = prev.io.popen('/bin/which lua')
+		-- local lua = h:read('*l')
+		-- h:close()
+		-- print(pl.pretty.write({lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)}}))
+		-- exit()
+		-- unistd.exec(lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)})
+		env.print 'Sorry, rebooting is not supported'
+	end
 	function create(...)
 		local _ENV = env
 		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next'}) do
@@ -352,15 +361,6 @@ return function(dir, ...)
 				shutdown = function()
 					alive = false
 					coroutine.yield()
-				end;
-				reboot = function()
-					-- local h = prev.io.popen('/bin/which lua')
-					-- local lua = h:read('*l')
-					-- h:close()
-					-- print(pl.pretty.write({lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)}}))
-					-- exit()
-					-- unistd.exec(lua, {pl.path.abspath(pl.path.join(dirname, 'cli.lua')), dir, unpack(args)})
-					print 'Sorry, rebooting is not supported'
 				end;
 
 				getComputerID = function()
@@ -507,9 +507,13 @@ return function(dir, ...)
 				if test == '\20' then
 					eventQueue[#eventQueue + 1] = { 'terminate' }
 					break
-				elseif test == '\3' then
+				elseif test == '\3' or test == '\19' then
+					io.write(T.clear())
 					exit()
 					os.exit()
+				elseif test == '\18' then
+					reboot()
+					break
 				end
 
 				local key = keys[test]

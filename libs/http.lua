@@ -184,7 +184,7 @@ function http.request(url, postData, headers)
 					data = ''
 					return dat
 				end
-				function res.gerResponseCode()
+				function res.getResponseCode()
 					return head.code
 				end
 				eventQueue[#eventQueue + 1] = { 'http_success', origURL, res }
