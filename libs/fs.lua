@@ -106,13 +106,17 @@ return {
 
 		if mode == 'r' then
 			function h.readAll()
-				local data = file:read('*a')
+				local data, err = file:read('*a')
 				if data then
 					data = data:gsub('\13', '\n')
 					-- prev.print('all', pl.pretty.write(data))
 					return data
 				else
-					return ''
+					if err then
+						error(err)
+					else
+						return ''
+					end
 				end
 			end
 
