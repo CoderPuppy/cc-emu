@@ -15,12 +15,12 @@ It's only been tested on Linux, but it should work on OS X and you might be able
 First install the dependencies:
 Arch Linux:
 [code]
-pacman -S lua unibilium
+pacman -S lua unibilium nanomsg
 # install termcap from the AUR
 [/code]
 Ubuntu (and most other Debian-based distros):
 [code]
-apt-get install lua5.2 libncurses5-dev libunibilium0
+apt-get install lua5.2 libncurses5-dev libunibilium0 libnanomsg0 libnanomsg-dev
 [/code]
 
 Install [url=https://luarocks.org]LuaRocks[/url]:
@@ -50,6 +50,7 @@ luarocks install penlight
 luarocks install luv
 luarocks install terminfo
 luarocks install luaposix
+luarocks install nn
 [/code]
 
 To start the emulator, run in a terminal in the directory the contains [i]cli.lua[/i]:
@@ -59,11 +60,52 @@ lua cli.lua . # replace with where you want the computer's root directory to be
 In the emulator Ctrl-Shift-tilde is mapped to left control (since that can't be captured on it's own).
 [/spoiler]
 
-[center][size=5][b]Plans / ToDo[/b][/size][/center]
+[center][size=5][b]Peripherals[/b][/size]
+[spoiler]
+Create a tree like this (replacing [id] with the id or side that the peripheral should be on):
+[code]
+.
+└── .termu/
+   └── peripherals/
+      └── [id]/
+         └── type
+[/code]
+
+[b]Currently supported types:[/b]
+[spoiler]
+[b]Nanomsg Modem[/b]
+[spoiler]
+Put "nanomsg-modem" in the type file.
+
+You'll need to run a server (for the addresses look at these: [url=http://nanomsg.org/v0.8/nn_ipc.7.html]ipc[/url], [url=http://nanomsg.org/v0.8/nn_tcp.7.html]tcp[/url]):
+[code]
+lua nanomsg-server.lua [publish address] [input address]
+[/code]
+
+Create a tree like this:
+[code]
+.
+└── .termu/
+    └── peripherals/
+        └── [id]/
+            ├── send_addr
+            ├── sub_addr
+            └── type
+[/code]
+
+In the sub_addr and send_addr files put addresses to connect to the server (sub_addr to publish address and send_addr to input address).
+
+Also you can run multiple server and have multiple modems connected to the same computer.
+And this whole section probably needs to be rewritten (if I suddenly get better at writing or someone else wants to help).
+[/spoiler]
+[/spoiler]
+[/spoiler]
+[/center]
+
+[center][size=5][b]Plans / To Do[/b][/size][/center]
 [spoiler]
 [list]
 [*] Better filesystem (support for more mounts, etc..)
-[*] Rednet
 [*] Better compatibility (error checking, etc..)
 [*] Disks
 [*] Mouse

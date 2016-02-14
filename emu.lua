@@ -96,7 +96,11 @@ return function(dir, ...)
 		end
 
 		local peripherals
-		peripheral, peripherals = loadLib('peripheral')
+		peripheral, peripherals = loadLib('peripheral', prev, pl)
+
+		loadLib('peripheral-config', prev, pl, dir, peripherals, {
+			["nanomsg-modem"] = loadLib('nanomsg-modem', prev, pl, luv, event_queue);
+		})
 
 		local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
 
@@ -190,7 +194,7 @@ return function(dir, ...)
 		end
 
 		termNat = loadLib('term', prev, luv, T, stdin)
-		-- termNat = loadLib('term-fake')
+		-- termNat = loadLib('term-fake', prev)
 		term = termNat
 
 		do -- RS
@@ -240,6 +244,7 @@ return function(dir, ...)
 			term.setBackgroundColor(math.pow(2, 14))
 			term.setCursorPos(1, 1)
 			term.clear()
+			prev.print('error')
 			prev.print(err.err)
 			for _, frame in ipairs(err.stack) do
 				prev.print(frame)
@@ -289,8 +294,8 @@ return function(dir, ...)
 	end
 
 	while alive and coroutine.status(co) ~= 'dead' do
-		for _, tick in ipairs(tick) do
-			tick()
+		for _, fn in ipairs(tick) do
+			fn()
 		end
 	end
 	exit()

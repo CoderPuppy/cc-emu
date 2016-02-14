@@ -8,6 +8,7 @@
 - [luv](https://github.com/luvit/luv)
 - [terminfo](http://www.pjb.com.au/comp/lua/terminfo.html) (except on LuaJIT)
 - [luaposix](https://luaposix.github.io/luaposix)
+- [nn](https://github.com/CoderPuppy/nn)
 
 ### Compatibility
 This version has been cursorily tested with:
