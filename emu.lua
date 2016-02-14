@@ -29,6 +29,7 @@ return function(dir, ...)
 	local alive = true
 	local event_queue = {{n = select('#', ...), ...}}
 	local timers = {}
+	local tick = {}
 	local termNat
 	local starting_uptime = 0
 	do
@@ -95,7 +96,11 @@ return function(dir, ...)
 		end
 
 		local peripherals
-		peripheral, peripherals = loadLib('peripheral')
+		peripheral, peripherals = loadLib('peripheral', prev, pl)
+
+		loadLib('peripheral-config', prev, pl, dir, peripherals, {
+			["nanomsg-modem"] = loadLib('nanomsg-modem', prev, pl, luv, event_queue);
+		})
 
 		local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
 
@@ -189,7 +194,7 @@ return function(dir, ...)
 		end
 
 		termNat = loadLib('term', prev, luv, T, stdin)
-		-- termNat = loadLib('term-fake')
+		-- termNat = loadLib('term-fake', prev)
 		term = termNat
 
 		do -- RS
@@ -220,6 +225,7 @@ return function(dir, ...)
 			term.setBackgroundColor(math.pow(2, 14))
 			term.setCursorPos(1, 1)
 			term.clear()
+			prev.print('error')
 			prev.print(err.err)
 			for _, frame in ipairs(err.stack) do
 				prev.print(frame)
@@ -232,9 +238,11 @@ return function(dir, ...)
 
 	local eventFilter
 
-	while alive and coroutine.status(co) ~= 'dead' do
+	tick[#tick + 1] = function()
 		luv.run(#event_queue >= 1 and 'nowait' or 'once')
+	end
 
+	tick[#tick + 1] = function()
 		while #event_queue >= 1 do
 			local ev = table.remove(event_queue, 1)
 			if eventFilter == nil or ev[1] == eventFilter or ev[1] == 'terminate' then
@@ -263,6 +271,12 @@ return function(dir, ...)
 				end
 				break
 			end
+		end
+	end
+
+	while alive and coroutine.status(co) ~= 'dead' do
+		for _, fn in ipairs(tick) do
+			fn()
 		end
 	end
 	exit()

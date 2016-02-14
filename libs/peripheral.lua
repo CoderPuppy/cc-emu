@@ -1,18 +1,15 @@
+local prev, pl = ...
+
 local peripherals = {}
 
 local peripheral = {
-	getNames = function()
-		local names = {}
-		for name in pairs(peripherals) do
-			names[#names + 1] = name
-		end
-		return names
-	end;
-	isPresent = function(nmae)
+	isPresent = function(name)
 		return not not peripherals[name]
 	end;
 	getType = function(name)
-		return peripherals[name].type
+		if peripherals[name] then
+			return peripherals[name].type
+		end
 	end;
 	getMethods = function(name)
 		local methods = {}
