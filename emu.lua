@@ -102,6 +102,7 @@ return function(dir, ...)
 
 			loadLib('peripheral-config', prev, pl, dir, peripherals, {
 				["nanomsg-modem"] = loadLib('nanomsg-modem', prev, pl, luv, event_queue);
+				["cups-printer"] = loadLib('cups-printer', prev, pl, luv, event_queue);
 			})
 
 			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
