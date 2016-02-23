@@ -41,7 +41,7 @@ local function get(side)
 end
 
 function rs.getSides()
-	local t = {}
+	local t = { 'top', 'bottom', 'left', 'right', 'front', 'back' }
 	for k, _ in pairs(gpios) do
 		t[#t + 1] = k
 	end
@@ -49,16 +49,22 @@ function rs.getSides()
 end
 
 function rs.getInput(side)
+	if not gpios[side] then return false end
+
 	return get(side).gpio:read()
 end
 
 function rs.setOutput(side, bool)
+	if not gpios[side] then return end
+
 	local gpio = get(side)
 	gpio.gpio:write(bool)
 	gpio.out = bool
 end
 
 function rs.getOutput(side)
+	if not gpios[side] then return false end
+
 	return get(side).out
 end
 
