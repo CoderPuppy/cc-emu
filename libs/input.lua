@@ -297,7 +297,7 @@ end)
 
 exit_seq[#exit_seq + 1] = function()
 	fcntl.fcntl(1, fcntl.F_SETFL, _bit.band(fcntl.fcntl(1, fcntl.F_GETFL), _bit.bnot(fcntl.O_NONBLOCK)))
-	io.write(T.keypad_local())
+	prev.io.write(T.keypad_local())
 	luv.tty_set_mode(stdin, 0)
 end
 

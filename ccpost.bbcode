@@ -98,6 +98,19 @@ In the sub_addr and send_addr files put addresses to connect to the server (sub_
 Also you can run multiple server and have multiple modems connected to the same computer.
 And this whole section probably needs to be rewritten (if I suddenly get better at writing or someone else wants to help).
 [/spoiler]
+
+[b]CUPS Printer[/b]
+[spoiler]
+Put "cups-printer" in the type file.
+
+It should work straight away.
+
+It's possible to customize it with the following files:
+[list]
+[*] cmd (default: "a2ps --columns=1 -l $$width$$ -L $$height$$ --center-title=$$title$$ 2>/dev/null | lpr >/dev/null 2>/dev/null")
+[*] width (default: 25)
+[*] height (default: 21)
+[/spoiler]
 [/spoiler]
 [/spoiler]
 [/center]

@@ -12,6 +12,7 @@ local peripheral = {
 		end
 	end;
 	getMethods = function(name)
+		if not peripherals[name] then error('unknown peripheral: ' .. tostring(name)) end
 		local methods = {}
 		for name, f in pairs(peripherals[name]) do
 			if type(f) == 'function' then
@@ -21,6 +22,8 @@ local peripheral = {
 		return methods
 	end;
 	call = function(name, meth, ...)
+		if not peripherals[name] then error('unknown peripheral: ' .. tostring(name)) end
+		if not peripherals[name][meth] then error('unknown method: ' .. tostring(meth)) end
 		return peripherals[name][meth](...)
 	end;
 }

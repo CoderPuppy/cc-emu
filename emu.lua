@@ -82,153 +82,166 @@ return function(dir, ...)
 		bit = _bit
 		_G = env
 		_HOST = 'termu'
+
 		local args = { n = select('#', ...), ... }
 
-		local function loadLib(lib, ...)
-			local fn, err = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
-			if err then
-				error(err)
+		local ok, err = xpcall(function()
+			local function loadLib(lib, ...)
+				local fn, err = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
+				if err then
+					error(err)
+				end
+				if setfenv then
+					setfenv(fn, _G)
+				end
+				return fn(...)
 			end
-			if setfenv then
-				setfenv(fn, _G)
-			end
-			return fn(...)
-		end
 
-		local peripherals
-		peripheral, peripherals = loadLib('peripheral', prev, pl)
+			local peripherals
+			peripheral, peripherals = loadLib('peripheral', prev, pl)
 
-		loadLib('peripheral-config', prev, pl, dir, peripherals, {
-			["nanomsg-modem"] = loadLib('nanomsg-modem', prev, pl, luv, event_queue);
-		})
+			loadLib('peripheral-config', prev, pl, dir, peripherals, {
+				["nanomsg-modem"] = loadLib('nanomsg-modem', prev, pl, luv, event_queue);
+				["cups-printer"] = loadLib('cups-printer', prev, pl, luv, event_queue);
+			})
 
-		local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
+			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
 
-		local runRom
-		fs, runRom = loadLib('fs', prev, pl, dirname, dir)
+			local runRom
+			fs, runRom = loadLib('fs', prev, pl, dirname, dir)
 
-		do -- OS
-			os = {
-				queueEvent = function(ev, ...)
-					event_queue[#event_queue + 1] = { n = select('#', ...) + 1, ev, ... }
-				end;
+			do -- OS
+				os = {
+					queueEvent = function(ev, ...)
+						event_queue[#event_queue + 1] = { n = select('#', ...) + 1, ev, ... }
+					end;
 
-				startTimer = function(time)
-					local id = #timers + 1
-					local timer = luv.new_timer()
-					luv.timer_start(timer, time * 1000, 0, function()
-						timers[id] = nil
-						luv.timer_stop(timer)
-						luv.close(timer)
-						event_queue[#event_queue + 1] = { 'timer', id }
-					end)
-					timers[id] = { after = prev.os.time(), offset = time, timer = timer }
-					return id
-				end;
-				cancelTimer = function(id)
-					local timer = timers[id]
-					if timer then
-						luv.timer_stop(timer.timer)
-						luv.close(timer.timer)
-					end
-				end;
-
-				clock = prev.os.clock;
-				time = prev.os.time;
-				day = function()
-					-- increments every 20 minutes
-					return math.floor(uptime() / 60 / 20) + 1
-				end;
-
-				shutdown = function()
-					alive = false
-					coroutine.yield()
-				end;
-
-				getComputerID = function()
-					local path = pl.path.join(config_path, 'id')
-					if pl.path.isfile(path) then
-						local h, err = prev.io.open(path)
-						if err then
-							error(err)
+					startTimer = function(time)
+						local id = #timers + 1
+						local timer = luv.new_timer()
+						luv.timer_start(timer, time * 1000, 0, function()
+							timers[id] = nil
+							luv.timer_stop(timer)
+							luv.close(timer)
+							event_queue[#event_queue + 1] = { 'timer', id }
+						end)
+						timers[id] = { after = prev.os.time(), offset = time, timer = timer }
+						return id
+					end;
+					cancelTimer = function(id)
+						local timer = timers[id]
+						if timer then
+							luv.timer_stop(timer.timer)
+							luv.close(timer.timer)
 						end
-						local contents = h:read('*a'):match('^%s*(%d+)%s*$')
-						if not contents then
-							print('Invalid computer id')
+					end;
+
+					clock = prev.os.clock;
+					time = prev.os.time;
+					day = function()
+						-- increments every 20 minutes
+						return math.floor(uptime() / 60 / 20) + 1
+					end;
+
+					shutdown = function()
+						alive = false
+						coroutine.yield()
+					end;
+
+					getComputerID = function()
+						local path = pl.path.join(config_path, 'id')
+						if pl.path.isfile(path) then
+							local h, err = prev.io.open(path)
+							if err then
+								error(err)
+							end
+							local contents = h:read('*a'):match('^%s*(%d+)%s*$')
+							if not contents then
+								print('Invalid computer id')
+								return 0
+							end
+							h:close()
+							return tonumber(contents)
+						else
 							return 0
 						end
-						h:close()
-						return tonumber(contents)
-					else
-						return 0
-					end
-				end;
+					end;
 
-				getComputerLabel = function()
-					local path = pl.path.join(config_path, 'label')
-					if pl.path.isfile(path) then
-						local h, err = prev.io.open(path)
+					getComputerLabel = function()
+						local path = pl.path.join(config_path, 'label')
+						if pl.path.isfile(path) then
+							local h, err = prev.io.open(path)
+							if err then
+								error(err)
+							end
+							local contents = h:read('*a')
+							h:close()
+							return contents
+						else
+							return nil
+						end
+					end;
+
+					setComputerLabel = function(label)
+						if not pl.path.isdir(config_path) then
+							pl.path.mkdir(config_path)
+						end
+						local h, err = prev.io.open(pl.path.join(config_path, 'label'), 'w')
 						if err then
 							error(err)
 						end
-						local contents = h:read('*a')
+						h:write(label)
 						h:close()
-						return contents
-					else
-						return nil
-					end
-				end;
+					end;
+				}
+			end
 
-				setComputerLabel = function(label)
-					if not pl.path.isdir(config_path) then
-						pl.path.mkdir(config_path)
-					end
-					local h, err = prev.io.open(pl.path.join(config_path, 'label'), 'w')
-					if err then
-						error(err)
-					end
-					h:write(label)
-					h:close()
-				end;
-			}
-		end
+			do -- RS
+				redstone = {
+					getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end;
+					setOutput = function() end;
+				}
+				rs = redstone
+			end
 
-		termNat = loadLib('term', prev, luv, T, stdin)
-		-- termNat = loadLib('term-fake', prev)
-		term = termNat
+			termNat = loadLib('term', prev, luv, T, stdin)
+			-- termNat = loadLib('term-fake', prev)
+			term = termNat
 
-		do -- RS
-			redstone = {
-				getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end;
+			do -- RS
+				redstone = {
+					getSides = function() return { 'top', 'bottom', 'left', 'right', 'front', 'back' } end;
 
-				getInput = function(...) return redstone.getAnalogInput(...) ~= 0 end;
-				getAnalogInput = function() return 0 end;
+					getInput = function(...) return redstone.getAnalogInput(...) ~= 0 end;
+					getAnalogInput = function() return 0 end;
 
-				setOutput = function(...) return redstone.setAnalogOutput(..., 15) end;
-				getOutput = function(...) return redstone.getAnalogOutput(...) ~= 0 end;
-				
-				setAnalogOutput = function() end;
-				getAnalogOutput = function() return 0 end;
+					setOutput = function(...) return redstone.setAnalogOutput(..., 15) end;
+					getOutput = function(...) return redstone.getAnalogOutput(...) ~= 0 end;
+					
+					setAnalogOutput = function() end;
+					getAnalogOutput = function() return 0 end;
 
-				getBundledInput = function() return 0 end;
-				testBundledInput = function() return false end;
+					getBundledInput = function() return 0 end;
+					testBundledInput = function() return false end;
 
-				setBundledOutput = function() end;
-				getBundledOutput = function() return 0 end;
-			}
-			rs = redstone
-		end
+					setBundledOutput = function() end;
+					getBundledOutput = function() return 0 end;
+				}
+				rs = redstone
+			end
 
-		loadLib('redstone-gpio', prev, pl, dir, tick, event_queue)
+			loadLib('redstone-gpio', prev, pl, dir, tick, event_queue)
 
-		local peripherals
-		peripheral, peripherals = loadLib('peripheral')
+			local peripherals
+			peripheral, peripherals = loadLib('peripheral')
 
-		http = loadLib('http', prev, luv, pl, dirname, event_queue)
+			http = loadLib('http', prev, luv, pl, dirname, event_queue)
 
-		local ok, err = xpcall(function()
 			runRom('bios.lua', unpack(args, 1, args.n))
 		end, function(err)
+			for i = 1, 4 do
+				prev.print(i, pcall(error, '@', i))
+			end
 			local level = 5
 			local stack = {}
 			while true do

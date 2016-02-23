@@ -108,13 +108,22 @@ return function(dir, id)
 				end
 			end
 		end, function(msg)
-			print('err: ', msg)
+			print 'nanomsg listen thread err'
+			print('err: ' .. msg)
+			local level = 5
+			local stack = {}
+			while true do
+				local _, msg = pcall(error, '@', level)
+				if msg == '@' then break end
+				print(msg)
+				level = level + 1
+			end
 		end)
 	end, sub_addr, sub_id, async)
 
 	local open = {}
 
-	local modem = {}
+	local modem = { type = 'modem' }
 
 	function modem.isOpen(chan)
 		return open[chan]
@@ -143,6 +152,10 @@ return function(dir, id)
 
 	function modem.transmit(chan, rpl, msg)
 		send:send(tostring(chan) .. ':' .. tostring(rpl) .. ':' .. (pl.pretty.write(msg, '')))
+	end
+
+	function modem.isWireless()
+		return true
 	end
 
 	return modem
