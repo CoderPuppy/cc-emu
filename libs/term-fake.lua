@@ -1,3 +1,5 @@
+local prev = ...
+
 local cursorPos = {0, 0}
 local fg = 1
 local bg = 32768
@@ -18,7 +20,10 @@ local termNat; termNat = {
 	getCursorBlink = function() return blink end;
 	setCursorBlink = function(b) blink = b end;
 	getSize = function() return 80, 19 end;
-	write = function(str) prev.io.write(str) end;
+	-- write = function(str) prev.io.write(str) end;
+	write = function() end;
+	clear = function() end;
+	clearLine = function() end;
 	scroll = function() end;
 }
 return termNat
