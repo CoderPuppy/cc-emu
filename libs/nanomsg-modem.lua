@@ -1,8 +1,10 @@
 local prev, pl, luv, event_queue = ...
 
-local nn = prev.require 'nn'
+local nn
 
 return function(dir, id)
+	nn = prev.require 'nn'
+
 	local sub_addr, send_addr
 
 	do
