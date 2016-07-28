@@ -74,7 +74,7 @@ return function(dir, ...)
 	end
 	function create(...)
 		local _ENV = env
-		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'getfenv', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'loadstring', 'load', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next', 'assert'}) do
+		for _, name in prev.ipairs({'setmetatable', 'getmetatable', 'ipairs', 'string', 'tostring', 'tonumber', 'select', 'setfenv', 'table', 'pcall', 'xpcall', 'type', 'error', 'pairs', 'math', 'rawset', 'rawget', 'coroutine', '_VERSION', 'next', 'assert'}) do
 			env[name] = prev[name]
 		end
 		env.unpack = unpack
@@ -86,6 +86,30 @@ return function(dir, ...)
 		local args = { n = select('#', ...), ... }
 
 		local ok, err = xpcall(function()
+			function load(src, name, mode, env)
+				return prev.load(src, name, mode, env or _ENV)
+			end
+
+			function loadstring(src, name, env)
+				return prev.load(src, name, nil, env or _ENV)
+			end
+
+			function getfenv(f)
+				if type(f) == 'number' and f > 0 then
+					f = f + 1
+				elseif f == nil then
+					f = 2
+				end
+
+				local r = prev.getfenv(f)
+
+				if r == prev then
+					return _ENV
+				else
+					return r
+				end
+			end
+
 			local function loadLib(lib, ...)
 				local fn, err = prev.loadfile(pl.path.normpath(pl.path.join(dirname, 'libs', lib .. '.lua')), 't', _G)
 				if err then
