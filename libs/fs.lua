@@ -64,26 +64,49 @@ return {
 
 	delete = function(path)
 		path = findPath(path)
-		local ok, err = pl.file.delete(path)
-		if err then
-			error(err)
+		if pl.path.exists(findPath(path)) then
+			local ok, err = pl.file.delete(path)
+			if err then
+				error(err)
+			end
 		end
 	end;
 
 	move = function(src, dest)
 		src = findPath(src)
 		dest = findPath(dest)
+
+		if not pl.path.exists(src) then
+			error('No such file', 2)
+		end
+		if pl.path.exists(dest) then
+			error('File exists', 2)
+		end
+
 		pl.file.move(src, dest)
 	end;
 
 	copy = function(src, dest)
 		src = findPath(src)
 		dest = findPath(dest)
+
+		if not pl.path.exists(src) then
+			error('No such file', 2)
+		end
+		if pl.path.exists(dest) then
+			error('File exists', 2)
+		end
+
 		pl.file.copy(src, dest)
 	end;
 
 	list = function(path)
 		path = findPath(path)
+
+		if not pl.path.isdir(path) then
+			error('Not a directory', 2)
+		end
+		
 		local files = {}
 
 		if path == dir then
@@ -101,9 +124,11 @@ return {
 	end;
 
 	open = function(path, mode)
-		local file = prev.io.open(findPath(path), mode)
+		path = findPath(path)
 
-		if file == nil then return nil end
+		if not pl.path.isfile(path) then return nil end
+
+		local file = prev.io.open(path, mode)
 
 		local h = {}
 
@@ -157,6 +182,17 @@ return {
 		return pl.path.exists(findPath(path)) ~= false
 	end;
 
+	getDrive = function(path)
+		path = findPath(path)
+		if pl.path.exists(path) then
+			if path:find(romPath, 1, true) then
+				return 'rom'
+			else
+				return 'hdd'
+			end
+		end
+	end;
+
 	isDir = function(path)
 		return pl.path.isdir(findPath(path))
 	end;
@@ -196,6 +232,7 @@ return {
 	end;
 
 	getName = function(path) return pl.path.basename(path) end;
+	getSize = function(path) return math.pow(2, 20) end;
 
 	find = function(pat)
 		pat = pl.path.normpath(pat or '')
