@@ -9,7 +9,7 @@ for i in range(256):
     width = glyph.width
     glyph.clear()
     glyph.importOutlines('glyph_' + str(i) + '.svg')
-    glyph.transform((2.34, 0.0, 0.0, 2.34, 600/2 - 561.6/2, -1099))
-    glyph.width = 600
+    glyph.transform((3.5087777777778, 0.0, 0.0, 3.5087719298246, 0, -640 -978.421 -22.160684210526 -7.5187857142857))
+    glyph.width = 842.10666666667
 
 font.save('termu.sfd')
