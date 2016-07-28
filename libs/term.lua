@@ -1,4 +1,4 @@
-local prev, luv, T, stdin = ...
+local prev, pl, luv, dir, T, stdin, utf8 = ...
 
 local _colors = {
 	[1] = "white";
@@ -64,6 +64,26 @@ local function fromHexColor(h)
 	return hex[h] or error('not a hex color: ' .. tostring(h))
 end
 
+local processOutput
+if pl.path.exists(pl.path.join(dir, '.termu', 'term-munging')) then
+	local utf8 = prev.utf8 or prev.require 'utf8'
+	function processOutput(out)
+		local res = ''
+		for c in out:gmatch '.' do
+			if c == '\0' or c == '\9' or c == '\10' or c == '\13' or c == '\32' or c == '\128' or c == '\160' then
+				res = res .. c
+			else
+				res = res .. utf8.char(0xE000 + c:byte())
+			end
+		end
+		return res
+	end
+else
+	function processOutput(out)
+		return out
+	end
+end
+
 local termNat
 termNat = {
 	clear = function()
@@ -112,7 +132,7 @@ termNat = {
 	write = function(text)
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
-		prev.io.write(text)
+		prev.io.write(processOutput(text))
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
 	blit = function(text, textColors, backColors)
@@ -123,7 +143,7 @@ termNat = {
 		for i = 1, #text do
 			termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
 			termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
-			prev.io.write(text:sub(i, i))
+			prev.io.write(processOutput(text:sub(i, i)))
 		end
 		cursorX = cursorX + #text
 	end;
