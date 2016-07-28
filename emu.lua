@@ -217,6 +217,8 @@ return function(dir, ...)
 						h:write(label)
 						h:close()
 					end;
+
+					reboot = reboot;
 				}
 			end
 
