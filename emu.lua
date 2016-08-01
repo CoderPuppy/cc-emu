@@ -129,7 +129,7 @@ return function(dir, ...)
 				["cups-printer"] = loadLib('cups-printer', prev, pl, luv, event_queue);
 			})
 
-			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
+			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue, reboot)
 
 			local runRom
 			fs, runRom = loadLib('fs', prev, pl, dirname, dir)
