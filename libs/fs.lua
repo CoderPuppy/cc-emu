@@ -126,13 +126,16 @@ return {
 	open = function(path, mode)
 		path = findPath(path)
 
-		if not pl.path.isfile(path) then return nil end
+		if not pl.path.isfile(path) and (mode == 'r' or mode == 'rb') then return nil end
 
-		local file = prev.io.open(path, mode)
+		local file
 
 		local h = {}
 
 		if mode == 'r' then
+			file = prev.io.open(path, 'r')
+			if not file then return end
+
 			function h.readAll()
 				local data, err = file:read('*a')
 				if data then
@@ -157,6 +160,8 @@ return {
 				return line
 			end
 		elseif mode == 'w' or mode == 'a' then
+			file = prev.io.open(path, mode)
+
 			function h.write(data)
 				file:write(data)
 			end
@@ -171,8 +176,12 @@ return {
 			end
 		end
 
+		local open = true
 		function h.close()
-			file:close()
+			if open then
+				file:close()
+			end
+			open = false
 		end
 
 		return h
