@@ -18,24 +18,71 @@ local _colors = {
 	[16384] = "red";
 	[32768] = "black";
 }
-local ansiColors = {
-	    white = {7, false}; -- white
-	   orange = {1,  true}; -- bright red
-	  magenta = {5, false}; -- magenta
-	lightBlue = {4,  true}; -- bright blue
-	   yellow = {3,  true}; -- bright yellow
-	     lime = {2,  true}; -- bright green
-	     pink = {5, false}; -- magenta
-	     gray = {0, false}; -- black
-	lightGray = {0, false}; -- black
-	     cyan = {6, false}; -- cyan
-	   purple = {5, false}; -- magenta
-	     blue = {4, false}; -- blue
-	    brown = {3, false}; -- yellow
-	    green = {2, false}; -- green
-	      red = {1, false}; -- red
-	    black = {0, false}; -- black
+
+local color_escapes = {
+	fg = {
+		    white = T.setaf(7);
+		   orange = T.setaf(3);
+		  magenta = T.setaf(5);
+		lightBlue = T.setaf(4);
+		   yellow = T.setaf(3);
+		     lime = T.setaf(2);
+		     pink = T.setaf(5);
+		     gray = T.setaf(0);
+		lightGray = T.setaf(0);
+		     cyan = T.setaf(6);
+		   purple = T.setaf(5);
+		     blue = T.setaf(4);
+		    brown = T.setaf(3);
+		    green = T.setaf(2);
+		      red = T.setaf(1);
+		    black = T.setaf(0);
+	};
+	bg = {
+		    white = T.setab(7);
+		   orange = T.setab(3);
+		  magenta = T.setab(5);
+		lightBlue = T.setab(4);
+		   yellow = T.setab(3);
+		     lime = T.setab(2);
+		     pink = T.setab(5);
+		     gray = T.setab(0);
+		lightGray = T.setab(0);
+		     cyan = T.setab(6);
+		   purple = T.setab(5);
+		     blue = T.setab(4);
+		    brown = T.setab(3);
+		    green = T.setab(2);
+		      red = T.setab(1);
+		    black = T.setab(0);
+	};
 }
+do
+	local fg_dir = pl.path.join(dir, '.termu', 'term-colors', 'fg')
+	if pl.path.isdir(fg_dir) then
+		for color in pl.path.dir(fg_dir) do
+			local path = pl.path.join(fg_dir, color)
+			if id ~= '.' and id ~= '..' and pl.path.isfile(path) then
+				local h = prev.io.open(path)
+				color_escapes.fg[color] = h:read '*a'
+				h:close()
+			end
+		end
+	end
+
+	local bg_dir = pl.path.join(dir, '.termu', 'term-colors', 'bg')
+	if pl.path.isdir(bg_dir) then
+		for color in pl.path.dir(bg_dir) do
+			local path = pl.path.join(bg_dir, color)
+			if id ~= '.' and id ~= '..' and pl.path.isfile(path) then
+				local h = prev.io.open(path)
+				color_escapes.bg[color] = h:read '*a'
+				h:close()
+			end
+		end
+	end
+end
+
 local hex = {
 	['a'] = 10;
 	['b'] = 11;
@@ -87,11 +134,17 @@ end
 local termNat
 termNat = {
 	clear = function()
-		prev.io.write(T.clear())
+		local w, h = termNat.getSize()
+		for l = 0, h - 1 do
+			prev.io.write(T.cup(l, 0))
+			prev.io.write((' '):rep(w))
+		end
+		termNat.setCursorPos(cursorX, cursorY)
 	end;
 	clearLine = function()
+		local w, h = termNat.getSize()
 		prev.io.write(T.cup(cursorY - 1, 0))
-		prev.io.write(T.clr_eol())
+		prev.io.write((' '):rep(w))
 		termNat.setCursorPos(cursorX, cursorY)
 	end;
 	isColour = function() return true end;
@@ -111,9 +164,7 @@ termNat = {
 	setTextColor = function(c)
 		textColor = math.log(c) / log2
 
-		local color = ansiColors[_colors[c] ]
-		prev.io.write(T[color[2] and 'bold' or 'sgr0']())
-		prev.io.write(T.setaf(color[1]))
+		prev.io.write(color_escapes.fg[_colors[c] ])
 	end;
 	getTextColour = function(...) return termNat.getTextColor(...) end;
 	getTextColor = function()
@@ -123,7 +174,7 @@ termNat = {
 	setBackgroundColor = function(c)
 		backColor = math.log(c) / log2
 
-		prev.io.write(T.setab(ansiColors[_colors[c] ][1]))
+		prev.io.write(color_escapes.bg[_colors[c] ])
 	end;
 	getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
 	getBackgroundColor = function()
@@ -170,6 +221,8 @@ termNat = {
 }
 
 prev.io.write(T.smcup())
-prev.io.write(T.clear())
+termNat.setTextColor(1)
+termNat.setBackgroundColor(32768)
+termNat.clear()
 
 return termNat
