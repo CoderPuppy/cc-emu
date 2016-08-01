@@ -274,10 +274,12 @@ return function(dir, ...)
 			return {err = err, stack = stack}
 		end)
 		if not ok then
-			term.setTextColor(math.pow(2, 0))
-			term.setBackgroundColor(math.pow(2, 14))
-			term.setCursorPos(1, 1)
-			term.clear()
+			if term then
+				term.setTextColor(math.pow(2, 0))
+				term.setBackgroundColor(math.pow(2, 14))
+				term.setCursorPos(1, 1)
+				term.clear()
+			end
 			prev.print('error')
 			prev.print(err.err)
 			for _, frame in ipairs(err.stack) do
@@ -331,6 +333,7 @@ return function(dir, ...)
 		for _, fn in ipairs(tick) do
 			fn()
 		end
+		io.flush()
 	end
 	exit()
 end
