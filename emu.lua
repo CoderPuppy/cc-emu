@@ -230,7 +230,7 @@ return function(dir, ...)
 				rs = redstone
 			end
 
-			termNat = loadLib('term', prev, pl, luv, dir, T, stdin)
+			termNat = loadLib('term', prev, pl, luv, dir, T, stdin, exit_seq)
 			-- termNat = loadLib('term-fake', prev)
 			term = termNat
 

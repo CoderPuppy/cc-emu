@@ -1,4 +1,4 @@
-local prev, pl, luv, dir, T, stdin, utf8 = ...
+local prev, pl, luv, dir, T, stdin, exit_seq = ...
 
 local _colors = {
 	[1] = "white";
@@ -206,15 +206,15 @@ termNat = {
 		local txt = T[n < 0 and 'ri' or 'ind']()
 		prev.io.write(txt:rep(math.abs(n)))
 
-		if n > 0 then
-			prev.io.write(T.cup(h - n, 0))
-			prev.io.write(T.clr_eos())
-		elseif n < 0 then
-			for i = 0, n do
-				prev.io.write(T.cup(i, 0))
-				prev.io.write(T.clr_eol())
-			end
-		end
+		-- if n > 0 then
+		-- 	prev.io.write(T.cup(h - n, 0))
+		-- 	prev.io.write(T.clr_eos())
+		-- elseif n < 0 then
+		-- 	for i = 0, n do
+		-- 		prev.io.write(T.cup(i, 0))
+		-- 		prev.io.write((' '):rep(w))
+		-- 	end
+		-- end
 
 		termNat.setCursorPos(cursorX, cursorY)
 	end
@@ -224,5 +224,11 @@ prev.io.write(T.smcup())
 termNat.setTextColor(1)
 termNat.setBackgroundColor(32768)
 termNat.clear()
+prev.io.flush()
+
+exit_seq[#exit_seq + 1] = function()
+	prev.io.write(T.rmcup())
+	prev.io.flush()
+end
 
 return termNat
