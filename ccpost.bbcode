@@ -2,6 +2,8 @@
 [size=6][b]Termu[/b][/size]
 [b]A ComputerCraft Emulator for the Terminal[/b]
 
+[img]https://s19.postimg.org/9ozmwm2bn/2016_08_01_23_12_52.png[/img]
+
 This is a simple emulator written in Lua.
 It definitely doesn't have perfect emulation (e.g. LuaJ string bug, error checking).
 But it's pretty lightweight, supports very old versions of CC and with a couple small tweaks to the ROM can be automated (just in case you want to do that).
@@ -32,10 +34,10 @@ Either clone [url=https://github.com/alekso56/ComputercraftLua]alekso56/Computer
 [code]
 .
 ├── cc
-│   ├── bios.lua
-│   ├── README.md
-│   ├── rom
-│   └── treasure
+│   ├── bios.lua
+│   ├── README.md
+│   ├── rom
+│   └── treasure
 ├── ccpost.bbcode
 ├── cli.lua
 ├── emu.lua
@@ -51,6 +53,7 @@ luarocks install luv
 luarocks install terminfo
 luarocks install luaposix
 luarocks install nn
+luarocks install utf8
 [/code]
 
 To start the emulator, run in a terminal in the directory the contains [i]cli.lua[/i]:
@@ -60,15 +63,17 @@ lua cli.lua . # replace with where you want the computer's root directory to be
 In the emulator Ctrl-Shift-tilde is mapped to left control (since that can't be captured on it's own).
 [/spoiler]
 
-[center][size=5][b]Peripherals[/b][/size]
+[center][size=5][b]Configuration[/b][/size]
+[spoiler]
+[b]Peripherals[/b]
 [spoiler]
 Create a tree like this (replacing [id] with the id or side that the peripheral should be on):
 [code]
 .
 └── .termu/
-   └── peripherals/
-      └── [id]/
-         └── type
+   └── peripherals/
+      └── [id]/
+         └── type
 [/code]
 
 [b]Currently supported types:[/b]
@@ -86,11 +91,11 @@ Create a tree like this:
 [code]
 .
 └── .termu/
-    └── peripherals/
-        └── [id]/
-            ├── send_addr
-            ├── sub_addr
-            └── type
+   └── peripherals/
+      └── [id]/
+         ├── send_addr
+         ├── sub_addr
+         └── type
 [/code]
 
 In the sub_addr and send_addr files put addresses to connect to the server (sub_addr to publish address and send_addr to input address).
@@ -112,7 +117,56 @@ It's possible to customize it with the following files:
 [*] cmd (default: "a2ps --columns=1 -l $$width$$ -L $$height$$ --center-title=$$title$$ 2>/dev/null | lpr >/dev/null 2>/dev/null")
 [*] width (default: 25)
 [*] height (default: 21)
+[/list]
 [/spoiler]
+[/spoiler]
+[/spoiler]
+
+[b]Colors[/b]
+[spoiler]
+Create a tree like this:
+[code]
+.
+└── .termu/
+   └── term-colors/
+      └── [fg/bg]/
+         └── [color]
+[/code]
+in each of the files put the escape sequence you want Termu to output to switch to the color
+
+for example if you want CC's light blue color (in a terminal that supports truecolor):
+[code]
+echo -e '\e[38;2;153;178;242m' > .termu/term-colors/fg/lightBlue
+echo -e '\e[48;2;153;178;242m' > .termu/term-colors/bg/lightBlue
+[/code]
+[/spoiler]
+
+[b]Font[/b]
+[spoiler]
+You need:
+[list]
+[*] [url=https://fontforge.github.io/]Fontforge[/url] (fontforge on Arch Linux)
+[*] [url=https://www.python.org/]Python 3[/url]
+[*] Python Imaging Library (I used Pillow and pil-compat)
+[*] svgwrite
+[*] [url=http://www.imagemagick.org/]Imagemagick[/url] (imagemagick on Arch Linux)
+[/list]
+
+Grab assets/computercraft/textures/gui/termFont.png from a CC jar and put it in fonts
+
+Then in fonts run:
+[code]
+./build.sh
+[/code]
+
+That should generate a termu.otf file in fonts.
+
+To use create a tree like this:
+[code]
+.
+└── .termu/
+   └── term-munging
+[/code]
 [/spoiler]
 [/spoiler]
 [/center]
@@ -123,8 +177,6 @@ It's possible to customize it with the following files:
 [*] Better filesystem (support for more mounts, etc..)
 [*] Better compatibility (error checking, etc..)
 [*] Disks
-[*] Mouse
-[*] key_up
 [/list]
 [/spoiler]
 [/center]

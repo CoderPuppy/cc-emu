@@ -9,6 +9,7 @@
 - [terminfo](http://www.pjb.com.au/comp/lua/terminfo.html) (except on LuaJIT)
 - [luaposix](https://luaposix.github.io/luaposix)
 - [nn](https://github.com/CoderPuppy/nn) (only for nanomsg-modem)
+- [utf8](https://github.com/starwing/luautf8) (for LuaJIT, Lua 5.1 or Lua 5.2)
 
 ### Compatibility
 This version has been cursorily tested with:

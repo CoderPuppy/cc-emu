@@ -129,7 +129,7 @@ return function(dir, ...)
 				["cups-printer"] = loadLib('cups-printer', prev, pl, luv, event_queue);
 			})
 
-			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue)
+			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue, reboot, tick)
 
 			local runRom
 			fs, runRom = loadLib('fs', prev, pl, dirname, dir)
@@ -230,7 +230,7 @@ return function(dir, ...)
 				rs = redstone
 			end
 
-			termNat = loadLib('term', prev, pl, luv, dir, T, stdin)
+			termNat = loadLib('term', prev, pl, luv, dir, T, stdin, exit_seq)
 			-- termNat = loadLib('term-fake', prev)
 			term = termNat
 
@@ -279,10 +279,12 @@ return function(dir, ...)
 			return {err = err, stack = stack}
 		end)
 		if not ok then
-			term.setTextColor(math.pow(2, 0))
-			term.setBackgroundColor(math.pow(2, 14))
-			term.setCursorPos(1, 1)
-			term.clear()
+			if term then
+				term.setTextColor(math.pow(2, 0))
+				term.setBackgroundColor(math.pow(2, 14))
+				term.setCursorPos(1, 1)
+				term.clear()
+			end
 			prev.print('error')
 			prev.print(err.err)
 			for _, frame in ipairs(err.stack) do
@@ -336,6 +338,7 @@ return function(dir, ...)
 		for _, fn in ipairs(tick) do
 			fn()
 		end
+		io.flush()
 	end
 	exit()
 end

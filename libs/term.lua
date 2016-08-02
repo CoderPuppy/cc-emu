@@ -1,4 +1,4 @@
-local prev, pl, luv, dir, T, stdin, utf8 = ...
+local prev, pl, luv, dir, T, stdin, exit_seq = ...
 
 local _colors = {
 	[1] = "white";
@@ -18,24 +18,71 @@ local _colors = {
 	[16384] = "red";
 	[32768] = "black";
 }
-local ansiColors = {
-	    white = {7, false}; -- white
-	   orange = {1,  true}; -- bright red
-	  magenta = {5, false}; -- magenta
-	lightBlue = {4,  true}; -- bright blue
-	   yellow = {3,  true}; -- bright yellow
-	     lime = {2,  true}; -- bright green
-	     pink = {5, false}; -- magenta
-	     gray = {0, false}; -- black
-	lightGray = {0, false}; -- black
-	     cyan = {6, false}; -- cyan
-	   purple = {5, false}; -- magenta
-	     blue = {4, false}; -- blue
-	    brown = {3, false}; -- yellow
-	    green = {2, false}; -- green
-	      red = {1, false}; -- red
-	    black = {0, false}; -- black
+
+local color_escapes = {
+	fg = {
+		    white = T.setaf(7);
+		   orange = T.setaf(3);
+		  magenta = T.setaf(5);
+		lightBlue = T.setaf(4);
+		   yellow = T.setaf(3);
+		     lime = T.setaf(2);
+		     pink = T.setaf(5);
+		     gray = T.setaf(0);
+		lightGray = T.setaf(0);
+		     cyan = T.setaf(6);
+		   purple = T.setaf(5);
+		     blue = T.setaf(4);
+		    brown = T.setaf(3);
+		    green = T.setaf(2);
+		      red = T.setaf(1);
+		    black = T.setaf(0);
+	};
+	bg = {
+		    white = T.setab(7);
+		   orange = T.setab(3);
+		  magenta = T.setab(5);
+		lightBlue = T.setab(4);
+		   yellow = T.setab(3);
+		     lime = T.setab(2);
+		     pink = T.setab(5);
+		     gray = T.setab(0);
+		lightGray = T.setab(0);
+		     cyan = T.setab(6);
+		   purple = T.setab(5);
+		     blue = T.setab(4);
+		    brown = T.setab(3);
+		    green = T.setab(2);
+		      red = T.setab(1);
+		    black = T.setab(0);
+	};
 }
+do
+	local fg_dir = pl.path.join(dir, '.termu', 'term-colors', 'fg')
+	if pl.path.isdir(fg_dir) then
+		for color in pl.path.dir(fg_dir) do
+			local path = pl.path.join(fg_dir, color)
+			if id ~= '.' and id ~= '..' and pl.path.isfile(path) then
+				local h = prev.io.open(path)
+				color_escapes.fg[color] = h:read '*a'
+				h:close()
+			end
+		end
+	end
+
+	local bg_dir = pl.path.join(dir, '.termu', 'term-colors', 'bg')
+	if pl.path.isdir(bg_dir) then
+		for color in pl.path.dir(bg_dir) do
+			local path = pl.path.join(bg_dir, color)
+			if id ~= '.' and id ~= '..' and pl.path.isfile(path) then
+				local h = prev.io.open(path)
+				color_escapes.bg[color] = h:read '*a'
+				h:close()
+			end
+		end
+	end
+end
+
 local hex = {
 	['a'] = 10;
 	['b'] = 11;
@@ -87,11 +134,17 @@ end
 local termNat
 termNat = {
 	clear = function()
-		prev.io.write(T.clear())
+		local w, h = termNat.getSize()
+		for l = 0, h - 1 do
+			prev.io.write(T.cup(l, 0))
+			prev.io.write((' '):rep(w))
+		end
+		termNat.setCursorPos(cursorX, cursorY)
 	end;
 	clearLine = function()
+		local w, h = termNat.getSize()
 		prev.io.write(T.cup(cursorY - 1, 0))
-		prev.io.write(T.clr_eol())
+		prev.io.write((' '):rep(w))
 		termNat.setCursorPos(cursorX, cursorY)
 	end;
 	isColour = function() return true end;
@@ -103,17 +156,24 @@ termNat = {
 	getCursorPos = function() return cursorX, cursorY end;
 	setCursorPos = function(x, y)
 		if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
+		local oldX, oldY = cursorX, cursorY
 		cursorX, cursorY = math.floor(x), math.floor(y)
 
-		prev.io.write(T.cup(cursorY - 1, cursorX - 1))
+		local w, h = luv.tty_get_winsize(stdin)
+		if cursorY < 1 or cursorY > h or cursorX < 1 or cursorX > w then
+			prev.io.write(T.cursor_invisible())
+		else
+			if oldY < 1 or oldY > h or oldX < 1 or oldX > w then
+				prev.io.write(T.cursor_normal())
+			end
+			prev.io.write(T.cup(cursorY - 1, cursorX - 1))
+		end
 	end;
 	setTextColour = function(...) return termNat.setTextColor(...) end;
 	setTextColor = function(c)
 		textColor = math.log(c) / log2
 
-		local color = ansiColors[_colors[c] ]
-		prev.io.write(T[color[2] and 'bold' or 'sgr0']())
-		prev.io.write(T.setaf(color[1]))
+		prev.io.write(color_escapes.fg[_colors[c] ])
 	end;
 	getTextColour = function(...) return termNat.getTextColor(...) end;
 	getTextColor = function()
@@ -123,7 +183,7 @@ termNat = {
 	setBackgroundColor = function(c)
 		backColor = math.log(c) / log2
 
-		prev.io.write(T.setab(ansiColors[_colors[c] ][1]))
+		prev.io.write(color_escapes.bg[_colors[c] ])
 	end;
 	getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
 	getBackgroundColor = function()
@@ -155,21 +215,29 @@ termNat = {
 		local txt = T[n < 0 and 'ri' or 'ind']()
 		prev.io.write(txt:rep(math.abs(n)))
 
-		if n > 0 then
-			prev.io.write(T.cup(h - n, 0))
-			prev.io.write(T.clr_eos())
-		elseif n < 0 then
-			for i = 0, n do
-				prev.io.write(T.cup(i, 0))
-				prev.io.write(T.clr_eol())
-			end
-		end
+		-- if n > 0 then
+		-- 	prev.io.write(T.cup(h - n, 0))
+		-- 	prev.io.write(T.clr_eos())
+		-- elseif n < 0 then
+		-- 	for i = 0, n do
+		-- 		prev.io.write(T.cup(i, 0))
+		-- 		prev.io.write((' '):rep(w))
+		-- 	end
+		-- end
 
 		termNat.setCursorPos(cursorX, cursorY)
 	end
 }
 
 prev.io.write(T.smcup())
-prev.io.write(T.clear())
+termNat.setTextColor(1)
+termNat.setBackgroundColor(32768)
+termNat.clear()
+prev.io.flush()
+
+exit_seq[#exit_seq + 1] = function()
+	prev.io.write(T.rmcup())
+	prev.io.flush()
+end
 
 return termNat
