@@ -156,9 +156,18 @@ termNat = {
 	getCursorPos = function() return cursorX, cursorY end;
 	setCursorPos = function(x, y)
 		if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
+		local oldX, oldY = cursorX, cursorY
 		cursorX, cursorY = math.floor(x), math.floor(y)
 
-		prev.io.write(T.cup(cursorY - 1, cursorX - 1))
+		local w, h = luv.tty_get_winsize(stdin)
+		if cursorY < 1 or cursorY > h or cursorX < 1 or cursorX > w then
+			prev.io.write(T.cursor_invisible())
+		else
+			if oldY < 1 or oldY > h or oldX < 1 or oldX > w then
+				prev.io.write(T.cursor_normal())
+			end
+			prev.io.write(T.cup(cursorY - 1, cursorX - 1))
+		end
 	end;
 	setTextColour = function(...) return termNat.setTextColor(...) end;
 	setTextColor = function(c)
