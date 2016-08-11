@@ -96,6 +96,7 @@ for i = 0, 9 do
 end
 
 local cursorX, cursorY = 1, 1
+local cursorBlink = true
 local textColor, backColor = 0, 15
 local log2 = math.log(2)
 
@@ -159,13 +160,10 @@ termNat = {
 		local oldX, oldY = cursorX, cursorY
 		cursorX, cursorY = math.floor(x), math.floor(y)
 
+		termNat.setCursorBlink(cursorBlink)
+
 		local w, h = luv.tty_get_winsize(stdin)
-		if cursorY < 1 or cursorY > h or cursorX < 1 or cursorX > w then
-			prev.io.write(T.cursor_invisible())
-		else
-			if oldY < 1 or oldY > h or oldX < 1 or oldX > w then
-				prev.io.write(T.cursor_normal())
-			end
+		if cursorY >= 1 and cursorY <= h and cursorX >= 1 and cursorX <= w then
 			prev.io.write(T.cup(cursorY - 1, cursorX - 1))
 		end
 	end;
@@ -192,7 +190,10 @@ termNat = {
 	write = function(text)
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
-		prev.io.write(processOutput(text))
+		local w, h = luv.tty_get_winsize(stdin)
+		if cursorY >= 1 and cursorY <= h and cursorX > 1 - #text and cursorX <= w then
+			prev.io.write(processOutput(text))
+		end
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
 	blit = function(text, textColors, backColors)
@@ -200,14 +201,32 @@ termNat = {
 
 		if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
 
-		for i = 1, #text do
-			termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
-			termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
-			prev.io.write(processOutput(text:sub(i, i)))
+		local w, h = luv.tty_get_winsize(stdin)
+		if cursorY >= 1 and cursorY <= h and cursorX > 1 - #text and cursorX <= w then
+			local fg, bg = textColor, backColor
+
+			for i = 1, #text do
+				termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
+				termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
+				prev.io.write(processOutput(text:sub(i, i)))
+			end
+
+			termNat.setTextColor(ccColorFor(fg))
+			termNat.setBackgroundColor(ccColorFor(bg))
 		end
-		cursorX = cursorX + #text
+
+		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
-	setCursorBlink = function() end;
+	setCursorBlink = function(blink)
+		cursorBlink = blink
+
+		local w, h = luv.tty_get_winsize(stdin)
+		if cursorBlink and cursorY >= 1 and cursorY <= h and cursorX >= 1 and cursorX <= w then
+			prev.io.write(T.cursor_normal())
+		else
+			prev.io.write(T.cursor_invisible())
+		end
+	end;
 	scroll = function(n)
 		n = n or 1
 		local w, h = luv.tty_get_winsize(stdin)
