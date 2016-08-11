@@ -64,7 +64,7 @@ return {
 
 	delete = function(path)
 		path = findPath(path)
-		if pl.path.exists(findPath(path)) then
+		if pl.path.exists(path) then
 			local ok, err = pl.file.delete(path)
 			if err then
 				error(err)
