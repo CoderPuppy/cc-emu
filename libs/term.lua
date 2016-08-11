@@ -118,8 +118,10 @@ if pl.path.exists(pl.path.join(dir, '.termu', 'term-munging')) then
 	function processOutput(out)
 		local res = ''
 		for c in out:gmatch '.' do
-			if c == '\0' or c == '\9' or c == '\10' or c == '\13' or c == '\32' or c == '\128' or c == '\160' then
+			if c == '\0' or c == '\9' or c == '\10' or c == '\13' or c == '\32' or c == '\160' then
 				res = res .. c
+			elseif c == '\128' then
+				res = res .. ' '
 			else
 				res = res .. utf8.char(0xE000 + c:byte())
 			end
