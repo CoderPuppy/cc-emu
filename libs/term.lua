@@ -163,8 +163,8 @@ termNat = {
 		termNat.setCursorBlink(cursorBlink)
 
 		local w, h = luv.tty_get_winsize(stdin)
-		if cursorY >= 1 and cursorY <= h and cursorX >= 1 and cursorX <= w then
-			prev.io.write(T.cup(cursorY - 1, cursorX - 1))
+		if cursorY >= 1 and cursorY <= h and cursorX <= w then
+			prev.io.write(T.cup(cursorY - 1, math.max(0, cursorX - 1)))
 		end
 	end;
 	setTextColour = function(...) return termNat.setTextColor(...) end;
@@ -191,8 +191,12 @@ termNat = {
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
 		local w, h = luv.tty_get_winsize(stdin)
-		if cursorY >= 1 and cursorY <= h and cursorX > 1 - #text and cursorX <= w then
-			prev.io.write(processOutput(text))
+		if cursorY >= 1 and cursorY <= h and cursorX <= w then
+			if cursorX >= 1 then
+				prev.io.write(processOutput(text))
+			elseif cursorX > 1 - #text then
+				prev.io.write(processOutput(text:sub(-cursorX + 2)))
+			end
 		end
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
@@ -202,17 +206,27 @@ termNat = {
 		if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
 
 		local w, h = luv.tty_get_winsize(stdin)
-		if cursorY >= 1 and cursorY <= h and cursorX > 1 - #text and cursorX <= w then
-			local fg, bg = textColor, backColor
+		if cursorY >= 1 and cursorY <= h and cursorX <= w then
+			local start
 
-			for i = 1, #text do
-				termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
-				termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
-				prev.io.write(processOutput(text:sub(i, i)))
+			if cursorX >= 1 then
+				start = 1
+			elseif cursorX > 1 - #text then
+				start = -cursorX + 2
 			end
 
-			termNat.setTextColor(ccColorFor(fg))
-			termNat.setBackgroundColor(ccColorFor(bg))
+			if start then
+				local fg, bg = textColor, backColor
+
+				for i = start, #text do
+					termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
+					termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
+					prev.io.write(processOutput(text:sub(i, i)))
+				end
+
+				termNat.setTextColor(ccColorFor(fg))
+				termNat.setBackgroundColor(ccColorFor(bg))
+			end
 		end
 
 		termNat.setCursorPos(cursorX + #text, cursorY)
