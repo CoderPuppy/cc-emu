@@ -193,7 +193,7 @@ termNat = {
 		local w, h = luv.tty_get_winsize(stdin)
 		if cursorY >= 1 and cursorY <= h and cursorX <= w then
 			if cursorX >= 1 then
-				prev.io.write(processOutput(text))
+				prev.io.write(processOutput(text:sub(1, w - cursorX + 1)))
 			elseif cursorX > 1 - #text then
 				prev.io.write(processOutput(text:sub(-cursorX + 2)))
 			end
@@ -218,7 +218,7 @@ termNat = {
 			if start then
 				local fg, bg = textColor, backColor
 
-				for i = start, #text do
+				for i = start, math.min(#text, w - cursorX + start) do
 					termNat.setTextColor(ccColorFor(fromHexColor(textColors:sub(i, i))))
 					termNat.setBackgroundColor(ccColorFor(fromHexColor(backColors:sub(i, i))))
 					prev.io.write(processOutput(text:sub(i, i)))
