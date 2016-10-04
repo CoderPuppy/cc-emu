@@ -97,7 +97,7 @@ end
 
 local cursorX, cursorY = 1, 1
 local cursorBlink = true
-local textColor, backColor = 0, 15
+local textColor, backColor
 local log2 = math.log(2)
 
 local function ccColorFor(c)
@@ -171,9 +171,12 @@ termNat = {
 	end;
 	setTextColour = function(...) return termNat.setTextColor(...) end;
 	setTextColor = function(c)
+		local prevc = textColor
 		textColor = math.log(c) / log2
 
-		prev.io.write(color_escapes.fg[_colors[c] ])
+		if prevc ~= textColor then
+			prev.io.write(color_escapes.fg[_colors[c] ])
+		end
 	end;
 	getTextColour = function(...) return termNat.getTextColor(...) end;
 	getTextColor = function()
@@ -181,9 +184,12 @@ termNat = {
 	end;
 	setBackgroundColour = function(...) return termNat.setBackgroundColor(...) end;
 	setBackgroundColor = function(c)
+		local prevc = backColor
 		backColor = math.log(c) / log2
 
-		prev.io.write(color_escapes.bg[_colors[c] ])
+		if prevc ~= backColor then
+			prev.io.write(color_escapes.bg[_colors[c] ])
+		end
 	end;
 	getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
 	getBackgroundColor = function()
