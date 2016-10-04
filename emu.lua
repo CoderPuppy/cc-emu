@@ -1,5 +1,4 @@
 require 'luarocks.index'
-local T = require(jit and 'terminfo-luajit' or 'terminfo-norm')
 local luv = require 'luv'
 
 local pl = {
@@ -12,8 +11,6 @@ local pl = {
 
 local _bit = bit32 or require 'bit'
 local unpack = _G.unpack or table.unpack
-
-local unistd = require 'posix.unistd'
 
 local dirname = pl.path.dirname(debug.getinfo(1).source:match("@(.*)$"))
 
