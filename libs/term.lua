@@ -209,9 +209,9 @@ termNat = {
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
 	blit = function(text, textColors, backColors)
-		text = text:gsub('[\n\r]', '?')
+		text = tostring(text or ''):gsub('[\n\r]', '?')
 
-		if #text ~= #textColors or #text ~= #backColors then error('term.blit: text, textColors and backColors have to be the same length') end
+		if #text ~= #textColors or #text ~= #backColors then error('Arguments must be the same length', 2) end
 
 		local w, h = luv.tty_get_winsize(stdin)
 		if cursorY >= 1 and cursorY <= h and cursorX <= w then
