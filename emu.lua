@@ -1,7 +1,6 @@
 require 'luarocks.index'
 local T = require(jit and 'terminfo-luajit' or 'terminfo-norm')
 local luv = require 'luv'
-local fcntl = require 'posix.fcntl'
 
 local pl = {
 	path = require 'pl.path';
@@ -78,10 +77,10 @@ return function(dir, ...)
 			env[name] = prev[name]
 		end
 		env.unpack = unpack
-		-- env.prev = prev -- VERY BAD
+		env.prev = prev -- VERY BAD
 		bit = _bit
 		_G = env
-		_HOST = 'termu'
+		_HOST = 'ComputerCraft (Termu)'
 
 		local args = { n = select('#', ...), ... }
 
@@ -129,7 +128,7 @@ return function(dir, ...)
 				["cups-printer"] = loadLib('cups-printer', prev, pl, luv, event_queue);
 			})
 
-			local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue, reboot, tick)
+			-- local stdin = loadLib('input', prev, luv, T, _bit, pl, exit, exit_seq, event_queue, reboot, tick)
 
 			local runRom
 			fs, runRom = loadLib('fs', prev, pl, dirname, dir)
@@ -230,8 +229,8 @@ return function(dir, ...)
 				rs = redstone
 			end
 
-			termNat = loadLib('term', prev, pl, luv, dir, T, stdin, exit_seq)
-			-- termNat = loadLib('term-fake', prev)
+			-- termNat = loadLib('term', prev, pl, luv, dir, T, stdin, exit_seq)
+			termNat = loadLib('term-fake', prev)
 			term = termNat
 
 			do -- RS
@@ -260,9 +259,6 @@ return function(dir, ...)
 
 			runRom('bios.lua', unpack(args, 1, args.n))
 		end, function(err)
-			for i = 1, 4 do
-				prev.print(i, pcall(error, '@', i))
-			end
 			local level = 5
 			local stack = {}
 			while true do
@@ -274,17 +270,11 @@ return function(dir, ...)
 			return {err = err, stack = stack}
 		end)
 		if not ok then
-			if term then
-				term.setTextColor(math.pow(2, 0))
-				term.setBackgroundColor(math.pow(2, 14))
-				term.setCursorPos(1, 1)
-				term.clear()
-			end
-			prev.print('error')
 			prev.print(err.err)
 			for _, frame in ipairs(err.stack) do
 				prev.print(frame)
 			end
+			prev.error('ERROR')
 		end
 	end
 	if setfenv then setfenv(create, env) end
@@ -310,19 +300,7 @@ return function(dir, ...)
 				if ok then
 					eventFilter = err
 				else
-					-- red on black
-					print('there\'s an error')
-					if termNat then
-						termNat.setTextColor(math.pow(2, 14))
-						termNat.setBackgroundColor(math.pow(2, 0))
-						termNat.clear()
-						termNat.setCursorPos(1, 1)
-						termNat.write(err)
-					else
-						print(err)
-					end
-					alive = false
-					-- error(err)
+					error(err)
 				end
 				break
 			end
