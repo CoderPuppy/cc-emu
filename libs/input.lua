@@ -82,6 +82,11 @@ local pats = {
 	['?'] = {leftShift = true; slash = true; char = '?';};
 
 	['\16'] = {leftCtrl = true; p = true;};
+
+	['\27[1;2D'] = {leftShift = true; left = true;};
+	['\27[1;2C'] = {leftShift = true; right = true;};
+	['\27[1;2A'] = {leftShift = true; up = true;};
+	['\27[1;2B'] = {leftShift = true; down = true;};
 }
 
 for i = 1,26 do
