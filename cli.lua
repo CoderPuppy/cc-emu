@@ -13,4 +13,4 @@ local dir = table.remove(args, 1)
 -- local dir = '/home/cpup/code/lua/cc-emu/dev'
 dir = path.normpath(path.join(path.currentdir(), dir))
 
-emu(dir, unpack(args, 1, select('#', ...) - 1))
+emu(dir, (unpack or table.unpack)(args, 1, select('#', ...) - 1))
