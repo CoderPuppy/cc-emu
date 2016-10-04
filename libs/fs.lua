@@ -241,7 +241,10 @@ return {
 	end;
 
 	getName = function(path) return pl.path.basename(path) end;
-	getSize = function(path) return math.pow(2, 20) end;
+	getDir = function(path) return pl.path.dirname(path) end;
+
+	getSize = function(path) return 512 end;
+	getFreeSpace = function(path) return math.huge end;
 
 	find = function(pat)
 		pat = pl.path.normpath(pat or '')
