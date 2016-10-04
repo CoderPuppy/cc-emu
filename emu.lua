@@ -58,7 +58,6 @@ return function(dir, ...)
 		for _, fn in ipairs(exit_seq) do
 			fn()
 		end
-		luv.loop_close()
 	end
 
 	local env = {}
