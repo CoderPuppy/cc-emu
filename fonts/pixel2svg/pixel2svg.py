@@ -28,62 +28,108 @@ import PIL.Image
 import svgwrite
 import os.path
 
+import multiprocessing as MP
+
+def fmtBW(img):
+  if img.mode != '1' and img.mode != 'L':
+    return
+  def f(p):
+    if p != 0:
+      return True, {}
+  return img, f
+def fmtRGBA(img):
+  if img.mode != 'RGB' and img.mode != 'RGBA':
+    return
+  img = img.convert('RGBA')
+  def f(p):
+    # Omit transparent pixels
+    #
+    if p[3] > 0:
+      return True, {
+        'fill': svgwrite.rgb(*p[0:3]),
+        'fill-opacity': p[3] / 255
+      }
+  return img, f
+
+formats = [
+  fmtBW,
+  fmtRGBA,
+  lambda img: fmtRGBA(img.convert('RGBA'))
+]
+
+def go(inp, squaresize, overlap):
+  # print("vectorizing {0}".format(inp))
+  img = PIL.Image.open(inp)
+
+  img, fmt = next(i for i in (fmt(img) for fmt in formats) if i)
+
+  (width, height) = img.size
+  data = list(img.getdata())
+
+  svgdoc = svgwrite.Drawing(
+    filename = os.path.splitext(inp)[0] + ".svg",
+    size = (
+      "{0}px".format(width * squaresize),
+      "{0}px".format(height * squaresize)
+    )
+  )
+
+  rowcount = 0
+
+  for rowcount in range(height):
+    for colcount in range(width):
+      pixel = data.pop(0)
+
+      pixel_fmt = fmt(pixel)
+
+      if pixel_fmt:
+        pixel_fmt = pixel_fmt[1]
+        # If --overlap is given, use a slight overlap to prevent
+        # inaccurate SVG rendering
+        #
+        svgdoc.add(svgdoc.rect(
+          insert = ("{0}px".format(
+            colcount * squaresize),
+            "{0}px".format(rowcount * squaresize)
+          ),
+          size = ("{0}px".format(
+            squaresize + overlap),
+            "{0}px".format(squaresize + overlap)
+          ),
+          **pixel_fmt
+        ))
+  svgdoc.save()
+
 VERSION = "0.3.0"
 
 if __name__ == "__main__":
+  argument_parser = argparse.ArgumentParser(description="Convert pixel art to SVG")
 
-    argument_parser = argparse.ArgumentParser(description="Convert pixel art to SVG")
+  argument_parser.add_argument("files",
+    nargs = '+',
+    help = "The image file to convert"
+  )
 
-    argument_parser.add_argument("files",
-                                nargs = '+',
-                                help = "The image file to convert")
+  argument_parser.add_argument("--squaresize",
+    type = int,
+    default = 40,
+    help = "Width and height of vector squares in pixels, default: 40"
+  )
 
-    argument_parser.add_argument("--squaresize",
-                                type = int,
-                                default = 40,
-                                help = "Width and height of vector squares in pixels, default: 40")
+  argument_parser.add_argument("--overlap",
+    action = "store_true",
+    help = "If given, overlap vector squares by 1px"
+  )
 
-    argument_parser.add_argument("--overlap",
-                                action = "store_true",
-                                help = "If given, overlap vector squares by 1px")
+  argument_parser.add_argument("--version",
+    action = "version",
+    version = VERSION,
+    help = "Display the program version"
+  )
 
-    argument_parser.add_argument("--version",
-                                action = "version",
-                                version = VERSION,
-                                help = "Display the program version")
+  arguments = argument_parser.parse_args()
 
-    arguments = argument_parser.parse_args()
-
-    for inp in arguments.files:
-        print("vectorizing {0}".format(inp))
-        image = PIL.Image.open(inp)
-        image = image.convert("RGBA")
-
-        (width, height) = image.size
-        rgb_values = list(image.getdata())
-
-        svgdoc = svgwrite.Drawing(filename = os.path.splitext(inp)[0] + ".svg",
-                                  size = ("{0}px".format(width * arguments.squaresize),
-                                          "{0}px".format(height * arguments.squaresize)))
-
-        rowcount = 0
-
-        for rowcount in range(height):
-            for colcount in range(width):
-                rgb_tuple = rgb_values.pop(0)
-
-                # Omit transparent pixels
-                #
-                if rgb_tuple[3] > 0:
-
-                    # If --overlap is given, use a slight overlap to prevent
-                    # inaccurate SVG rendering
-                    #
-                    svgdoc.add(svgdoc.rect(insert = ("{0}px".format(colcount * arguments.squaresize),
-                                                     "{0}px".format(rowcount * arguments.squaresize)),
-                                           size = ("{0}px".format(arguments.squaresize + arguments.overlap),
-                                                   "{0}px".format(arguments.squaresize + arguments.overlap)),
-                                           fill = svgwrite.rgb(rgb_tuple[0],
-                                                               rgb_tuple[1],
-                                                               rgb_tuple[2])))
-        svgdoc.save()
+  for inp in arguments.files:
+    go(inp, arguments.squaresize, arguments.overlap)
+  # with MP.Pool() as p:
+  #   p.starmap(go, ((f, arguments.squaresize, arguments.overlap) for f in arguments.files))

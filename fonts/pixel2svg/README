@@ -1,4 +1,4 @@
-updated to Python 3, logging removed and multifile processing added by CoderPuppy
+updated to Python 3, logging removed and multifile processing, multithreading (though multuprocessing) and sort of better support for B/W formats (though it's technically wrong) added by CoderPuppy
 
 README for pixel2svg
 ====================
