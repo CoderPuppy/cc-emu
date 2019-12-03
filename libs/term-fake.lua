@@ -1,14 +1,14 @@
 local prev = ...
 
-local cursorPos = {0, 0}
+local cursorX, cursorY = 0, 0
 local fg = 1
 local bg = 32768
 local blink = true
 local termNat; termNat = {
-	isColor = function() return false end;
-	isColour = function() return false end;
-	getCursorPos = function() return unpack(cursorPos) end;
-	setCursorPos = function(x, y) cursorPos = {x, y} end;
+	isColor = function() return true end;
+	isColour = function() return true end;
+	getCursorPos = function() return cursorX, cursorY end;
+	setCursorPos = function(x, y) cursorX, cursorY = x, y end;
 	getBackgroundColor = function() return bg end;
 	setBackgroundColor = function(c) bg = c end;
 	getBackgroundColour = function() return bg end;
@@ -20,8 +20,9 @@ local termNat; termNat = {
 	getCursorBlink = function() return blink end;
 	setCursorBlink = function(b) blink = b end;
 	getSize = function() return 80, 19 end;
-	-- write = function(str) prev.io.write(str) end;
-	write = function() end;
+	write = function(str) prev.io.write(str); termNat.setCursorPos(cursorX + #str, cursorY) end;
+	-- write = function() end;
+	blit = function(text, fg, bg) prev.io.write(text); termNat.setCursorPos(cursorX + #text, cursorY) end;
 	clear = function() end;
 	clearLine = function() end;
 	scroll = function() end;
