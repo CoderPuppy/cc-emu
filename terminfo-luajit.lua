@@ -529,6 +529,7 @@ unibi_var_t unibi_var_from_str(char *);
 
 size_t unibi_run(const char *, unibi_var_t [9], char *, size_t);
 ]]
+local eval = require 'terminfo-eval'
 local T = {}
 local unibi = ffi.load('unibilium')
 local unibi_term = unibi.unibi_from_env()
@@ -536,22 +537,13 @@ for i = unibi.unibi_string_begin_ + 1, unibi.unibi_string_end_ - 1 do
 	local name = ffi.string(unibi.unibi_name_str(i))
 	local short_name = ffi.string(unibi.unibi_short_name_str(i))
 	local fmt = unibi.unibi_get_str(unibi_term, i)
-	local function run(...)
-		local vars = ffi.new('unibi_var_t[?]', 9)
-		for i = 1, 9 do
-			local arg = select(i, ...)
-			if type(arg) == 'string' then
-				vars[i - 1] = unibi.unibi_var_from_str(arg)
-			elseif type(arg) == 'number' then
-				vars[i - 1] = unibi.unibi_var_from_num(arg)
-			end
+	if fmt ~= nil then
+		fmt = ffi.string(fmt)
+		local function run(...)
+			return eval(fmt, ...)
 		end
-		local buf_size = 1024
-		local buf = ffi.new('char[?]', buf_size)
-		unibi.unibi_run(fmt, vars, buf, buf_size)
-		return ffi.string(buf)
+		T[name] = run
+		T[short_name] = run
 	end
-	T[name] = run
-	T[short_name] = run
 end
 return T
