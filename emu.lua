@@ -100,6 +100,7 @@ return function(dir, ...)
 		env.unpack = unpack
 		-- env.prev = prev -- VERY BAD
 		bit = _bit
+		bit32 = _bit
 		_G = env
 		_HOST = 'termu'
 
