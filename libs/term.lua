@@ -159,7 +159,6 @@ termNat = {
 	getCursorPos = function() return cursorX, cursorY end;
 	setCursorPos = function(x, y)
 		if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
-		local oldX, oldY = cursorX, cursorY
 		cursorX, cursorY = math.floor(x), math.floor(y)
 
 		termNat.setCursorBlink(cursorBlink)
@@ -172,7 +171,7 @@ termNat = {
 	setTextColour = function(...) return termNat.setTextColor(...) end;
 	setTextColor = function(c)
 		local prevc = textColor
-		textColor = math.log(c) / log2
+		textColor = c
 
 		if prevc ~= textColor then
 			prev.io.write(color_escapes.fg[_colors[c] ])
@@ -180,12 +179,12 @@ termNat = {
 	end;
 	getTextColour = function(...) return termNat.getTextColor(...) end;
 	getTextColor = function()
-		return ccColorFor(textColor)
+		return textColor
 	end;
 	setBackgroundColour = function(...) return termNat.setBackgroundColor(...) end;
 	setBackgroundColor = function(c)
 		local prevc = backColor
-		backColor = math.log(c) / log2
+		backColor = c
 
 		if prevc ~= backColor then
 			prev.io.write(color_escapes.bg[_colors[c] ])
@@ -193,7 +192,7 @@ termNat = {
 	end;
 	getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
 	getBackgroundColor = function()
-		return ccColorFor(backColor)
+		return backColor
 	end;
 	write = function(text)
 		text = tostring(text or '')
@@ -232,8 +231,8 @@ termNat = {
 					prev.io.write(processOutput(text:sub(i, i)))
 				end
 
-				termNat.setTextColor(ccColorFor(fg))
-				termNat.setBackgroundColor(ccColorFor(bg))
+				termNat.setTextColor(fg)
+				termNat.setBackgroundColor(bg)
 			end
 		end
 
