@@ -1,0 +1,2 @@
+peripheral.call('right', 'open', 1)
+print(os.pullEvent('modem_message'))
