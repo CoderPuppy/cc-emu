@@ -29,6 +29,7 @@ return function(dir, ...)
 	local alive = true
 	local event_queue = {{n = select('#', ...), ...}}
 	local timers = {}
+	local next_timer = 1
 	local tick = {}
 	local termNat
 	local starting_uptime = 0
@@ -141,7 +142,8 @@ return function(dir, ...)
 					end;
 
 					startTimer = function(time)
-						local id = #timers + 1
+						local id = next_timer
+						next_timer = next_timer + 1
 						local timer = luv.new_timer()
 						luv.timer_start(timer, time * 1000, 0, function()
 							timers[id] = nil
