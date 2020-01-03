@@ -1,4 +1,4 @@
-local prev, pl, luv, dir, T, stdin, exit_seq = ...
+local prev, pl, luv, dir, T, stdin, exit_seq, log = ...
 
 local _colors = {
 	[1] = "white";
@@ -137,6 +137,7 @@ end
 local termNat
 termNat = {
 	clear = function()
+		-- log('clear')
 		local w, h = termNat.getSize()
 		for l = 0, h - 1 do
 			prev.io.write(T.cup(l, 0))
@@ -145,6 +146,7 @@ termNat = {
 		termNat.setCursorPos(cursorX, cursorY)
 	end;
 	clearLine = function()
+		-- log('clearLine')
 		local w, h = termNat.getSize()
 		prev.io.write(T.cup(cursorY - 1, 0))
 		prev.io.write((' '):rep(w))
@@ -159,20 +161,22 @@ termNat = {
 	getCursorPos = function() return cursorX, cursorY end;
 	setCursorPos = function(x, y)
 		if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
-		local oldX, oldY = cursorX, cursorY
 		cursorX, cursorY = math.floor(x), math.floor(y)
+		-- log('setCursorPos %d %d', cursorX, cursorY)
 
 		termNat.setCursorBlink(cursorBlink)
 
 		local w, h = luv.tty_get_winsize(stdin)
 		if cursorY >= 1 and cursorY <= h and cursorX <= w then
+			-- log('actually setting cursor pos cup(%d, %d) = %q', cursorY - 1, math.max(0, cursorX - 1), T.cup(cursorY - 1, math.max(0, cursorX - 1)))
 			prev.io.write(T.cup(cursorY - 1, math.max(0, cursorX - 1)))
 		end
 	end;
 	setTextColour = function(...) return termNat.setTextColor(...) end;
 	setTextColor = function(c)
 		local prevc = textColor
-		textColor = math.log(c) / log2
+		textColor = c
+		-- log('setTextColor %s', _colors[c])
 
 		if prevc ~= textColor then
 			prev.io.write(color_escapes.fg[_colors[c] ])
@@ -180,12 +184,13 @@ termNat = {
 	end;
 	getTextColour = function(...) return termNat.getTextColor(...) end;
 	getTextColor = function()
-		return ccColorFor(textColor)
+		return textColor
 	end;
 	setBackgroundColour = function(...) return termNat.setBackgroundColor(...) end;
 	setBackgroundColor = function(c)
 		local prevc = backColor
-		backColor = math.log(c) / log2
+		backColor = c
+		-- log('setBackgroundColor %s', _colors[c])
 
 		if prevc ~= backColor then
 			prev.io.write(color_escapes.bg[_colors[c] ])
@@ -193,9 +198,10 @@ termNat = {
 	end;
 	getBackgroundColour = function(...) return termNat.getBackgroundColor(...) end;
 	getBackgroundColor = function()
-		return ccColorFor(backColor)
+		return backColor
 	end;
 	write = function(text)
+		-- log('write %q', text)
 		text = tostring(text or '')
 		text = text:gsub('[\n\r]', '?')
 		local w, h = luv.tty_get_winsize(stdin)
@@ -209,6 +215,7 @@ termNat = {
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
 	blit = function(text, textColors, backColors)
+		-- log('blit %q %q %q', text, textColors, backColors)
 		text = tostring(text or ''):gsub('[\n\r]', '?')
 
 		if #text ~= #textColors or #text ~= #backColors then error('Arguments must be the same length', 2) end
@@ -232,14 +239,15 @@ termNat = {
 					prev.io.write(processOutput(text:sub(i, i)))
 				end
 
-				termNat.setTextColor(ccColorFor(fg))
-				termNat.setBackgroundColor(ccColorFor(bg))
+				termNat.setTextColor(fg)
+				termNat.setBackgroundColor(bg)
 			end
 		end
 
 		termNat.setCursorPos(cursorX + #text, cursorY)
 	end;
 	setCursorBlink = function(blink)
+		-- log('setCursorBlink %s', blink)
 		cursorBlink = blink
 
 		local w, h = luv.tty_get_winsize(stdin)
@@ -250,6 +258,7 @@ termNat = {
 		end
 	end;
 	scroll = function(n)
+		-- log('scroll %d', n)
 		n = n or 1
 		local w, h = luv.tty_get_winsize(stdin)
 		prev.io.write(n < 0 and T.cup(0, 0) or T.cup(h, w))
