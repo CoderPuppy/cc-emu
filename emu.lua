@@ -84,15 +84,22 @@ return function(dir, ...)
 		_G = env
 		_HOST = 'termu'
 
+		if setfenv then setfenv(0, env) end
+
 		local args = { n = select('#', ...), ... }
 
 		local ok, err = xpcall(function()
-			function load(src, name, mode, env)
-				return prev.load(src, name, mode, env or _ENV)
-			end
+			if setfenv then
+				env.load = prev.load
+				env.loadstring = prev.loadstring
+			else
+				function load(src, name, mode, env)
+					return prev.load(src, name, mode, env or _ENV)
+				end
 
-			function loadstring(src, name, env)
-				return prev.load(src, name, nil, env or _ENV)
+				function loadstring(src, name, env)
+					return prev.load(src, name, nil, env or _ENV)
+				end
 			end
 
 			function getfenv(f)
