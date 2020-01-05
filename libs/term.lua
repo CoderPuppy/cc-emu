@@ -158,7 +158,7 @@ termNat = {
 	end;
 	getCursorPos = function() return cursorX, cursorY end;
 	setCursorPos = function(x, y)
-		if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y)) end
+		if type(x) ~= 'number' or type(y) ~= 'number' then error('term.setCursorPos expects number, number, got: ' .. type(x) .. ', ' .. type(y), 2) end
 		local oldX, oldY = cursorX, cursorY
 		cursorX, cursorY = math.floor(x), math.floor(y)
 
