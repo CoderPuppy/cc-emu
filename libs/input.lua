@@ -81,12 +81,20 @@ local pats = {
 	['>'] = {leftShift = true; period = true; char = '>';};
 	['?'] = {leftShift = true; slash = true; char = '?';};
 
+	['\4'] = {leftCtrl = true; d = true;};
 	['\16'] = {leftCtrl = true; p = true;};
 
 	['\27[1;2D'] = {leftShift = true; left = true;};
 	['\27[1;2C'] = {leftShift = true; right = true;};
 	['\27[1;2A'] = {leftShift = true; up = true;};
 	['\27[1;2B'] = {leftShift = true; down = true;};
+
+	['\27[1;3D'] = {leftAlt = true; left = true;};
+	['\27[1;3C'] = {leftAlt = true; right = true;};
+	['\27[1;3A'] = {leftAlt = true; up = true;};
+	['\27[1;3B'] = {leftAlt = true; down = true;};
+
+	[T.key_btab()] = {leftShift = true; tab = true; char = '\t'};
 }
 
 for i = 1,26 do
@@ -110,7 +118,7 @@ for name, pats_ in pairs({
 	minus = {'-', char = '-'};
 	equals = {'=', char = '='};
 	backspace = {T.key_backspace(), '\8', '\127'};
-	tab = {T.tab(), T.key_btab(), char = '\t'};
+	tab = {T.tab(), char = '\t'};
 	enter = {'\13'};
 	semiColon = {';', char = ';'};
 	apostrophe = {'\'', char = '\''};
@@ -159,22 +167,35 @@ local chard = ''
 local down1, down2 = {}, {}
 local timers = {}
 table.insert(tick, 1, function()
+	local sent = {}
+	local function send_key(k)
+		if sent[k] then return end
+		sent[k] = true
+
+		event_queue[#event_queue + 1] = { 'key', keys[k], not not down2[k] }
+
+		if timers[k] then
+			luv.timer_stop(timers[k])
+			luv.close(timers[k])
+		end
+
+		timers[k] = luv.new_timer()
+		luv.timer_start(timers[k], 1000/20, 0, function()
+			event_queue[#event_queue + 1] = { 'key_up', keys[k] }
+			luv.timer_stop(timers[k])
+			luv.close(timers[k])
+			timers[k] = nil
+		end)
+	end
+
+	for _, k in ipairs { 'leftCtrl'; 'rightCtrl'; 'leftShift'; 'rightShift'; 'leftAlt'; 'rightAlt'; } do
+		if down1[k] then
+			send_key(k)
+		end
+	end
 	for k in pairs(down1) do
 		if keys[k] then
-			event_queue[#event_queue + 1] = { 'key', keys[k], not not down2[k] }
-
-			if timers[k] then
-				luv.timer_stop(timers[k])
-				luv.close(timers[k])
-			end
-
-			timers[k] = luv.new_timer()
-			luv.timer_start(timers[k], 1000/20, 0, function()
-				event_queue[#event_queue + 1] = { 'key_up', keys[k] }
-				luv.timer_stop(timers[k])
-				luv.close(timers[k])
-				timers[k] = nil
-			end)
+			send_key(k)
 		end
 	end
 
@@ -188,6 +209,7 @@ table.insert(tick, 1, function()
 end)
 
 local function handle_key(data)
+	-- print(('%q'):format(data))
 	while #data > 0 do
 		local test = data
 		local rest = ''
