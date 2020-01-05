@@ -25,10 +25,14 @@ return function(dir, ...)
 	local stdscr
 
 	local config_path = pl.path.join(dir, '.termu')
+	if not pl.path.isdir(config_path) then
+		pl.path.mkdir(config_path)
+	end
 
 	local alive = true
 	local event_queue = {{n = select('#', ...), ...}}
 	local timers = {}
+	local next_timer = 1
 	local tick = {}
 	local termNat
 	local starting_uptime = 0
@@ -47,10 +51,8 @@ return function(dir, ...)
 	end
 
 	local exit_seq = {}
+	local log_file
 	local function exit()
-		if not pl.path.isdir(config_path) then
-			pl.path.mkdir(config_path)
-		end
 		do
 			local h = io.open(pl.path.join(config_path, 'uptime'), 'w')
 			h:write(tostring(uptime()))
@@ -60,6 +62,25 @@ return function(dir, ...)
 			fn()
 		end
 		luv.loop_close()
+		log_file:close()
+	end
+
+	do
+		local log_dir = pl.path.join(config_path, 'logs')
+		if not pl.path.isdir(log_dir) then
+			pl.path.mkdir(log_dir)
+		end
+		local date = os.date('%Y-%m-%d-%H-%M-%S-%z')
+		local i = 0
+		while pl.path.exists(pl.path.join(log_dir, date .. '-' .. tostring(i))) do
+			i = i + 1
+		end
+		log_file = io.open(pl.path.join(log_dir, date .. '-' .. tostring(i)), 'w')
+	end
+
+	local function log(f, ...)
+		log_file:write(string.format(f .. '\n', ...))
+		log_file:flush()
 	end
 
 	local env = {}
@@ -80,18 +101,26 @@ return function(dir, ...)
 		env.unpack = unpack
 		-- env.prev = prev -- VERY BAD
 		bit = _bit
+		bit32 = _bit
 		_G = env
 		_HOST = 'termu'
+
+		if setfenv then setfenv(0, env) end
 
 		local args = { n = select('#', ...), ... }
 
 		local ok, err = xpcall(function()
-			function load(src, name, mode, env)
-				return prev.load(src, name, mode, env or _ENV)
-			end
+			if setfenv then
+				env.load = prev.load
+				env.loadstring = prev.loadstring
+			else
+				function load(src, name, mode, env)
+					return prev.load(src, name, mode, env or _ENV)
+				end
 
-			function loadstring(src, name, env)
-				return prev.load(src, name, nil, env or _ENV)
+				function loadstring(src, name, env)
+					return prev.load(src, name, nil, env or _ENV)
+				end
 			end
 
 			function getfenv(f)
@@ -141,7 +170,8 @@ return function(dir, ...)
 					end;
 
 					startTimer = function(time)
-						local id = #timers + 1
+						local id = next_timer
+						next_timer = next_timer + 1
 						local timer = luv.new_timer()
 						luv.timer_start(timer, time * 1000, 0, function()
 							timers[id] = nil
@@ -230,7 +260,7 @@ return function(dir, ...)
 				rs = redstone
 			end
 
-			termNat = loadLib('term', prev, pl, luv, dir, T, stdin, exit_seq)
+			termNat = loadLib('term', prev, pl, luv, dir, T, stdin, exit_seq, log)
 			-- termNat = loadLib('term-fake', prev)
 			term = termNat
 
@@ -260,16 +290,23 @@ return function(dir, ...)
 
 			runRom('bios.lua', unpack(args, 1, args.n))
 		end, function(err)
+			prev.print(err)
+			log('ERROR %s', err)
 			for i = 1, 4 do
-				prev.print(i, pcall(error, '@', i))
+				local msg = select(2, pcall(error, '@', i))
+				log('STACK[%d]: %s', i, msg)
+				prev.print(i, msg)
 			end
-			local level = 5
+			local level = 5 -- TODO: why?
 			local stack = {}
 			while true do
 				local _, msg = pcall(error, '@', level)
 				if msg == '@' then break end
-				stack[#stack + 1 ] = msg
+				stack[#stack + 1] = msg
 				level = level + 1
+			end
+			for i = 1, #stack do
+				log('STACK[%d]: %s', i + 4, stack[i])
 			end
 			return {err = err, stack = stack}
 		end)
@@ -282,7 +319,9 @@ return function(dir, ...)
 			end
 			prev.print('error')
 			prev.print(err.err)
+			log('ERROR %s', err.err)
 			for _, frame in ipairs(err.stack) do
+				log('STACK: %s', frame)
 				prev.print(frame)
 			end
 		end

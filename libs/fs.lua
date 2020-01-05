@@ -160,7 +160,9 @@ return {
 				return line
 			end
 		elseif mode == 'w' or mode == 'a' then
-			file = prev.io.open(path, mode)
+			local err
+			file, err = prev.io.open(path, mode)
+			if not file then error(err) end
 
 			function h.write(data)
 				file:write(data)
